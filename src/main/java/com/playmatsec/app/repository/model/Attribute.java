@@ -2,6 +2,8 @@ package com.playmatsec.app.repository.model;
 
 import java.time.LocalDateTime;
 
+import com.playmatsec.app.controller.model.AttributeDTO;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,4 +28,12 @@ public class Attribute {
     private String color;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void update(AttributeDTO updateRequest) {
+        this.name = updateRequest.getName();
+        this.description = updateRequest.getDescription();
+        this.color = updateRequest.getColor();
+        this.createdAt = updateRequest.getCreatedAt();
+        this.updatedAt = updateRequest.getUpdatedAt();
+    }
 }

@@ -1,8 +1,8 @@
 package com.playmatsec.app.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
+import com.playmatsec.app.controller.model.AttributeDTO;
 import com.playmatsec.app.repository.model.Attribute;
 
 public interface AttributeService {
@@ -10,10 +10,12 @@ public interface AttributeService {
     String name,
     String description,
     String color,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt,
-    String sortBy,
-    Integer page,
-    Integer size
+    String createdAt,
+    String updatedAt
   );
+  Attribute getAttributeById(String id);
+  Attribute createAttribute(AttributeDTO attribute);
+  Attribute updateAttribute(String id, String updateRequest);
+  Attribute updateAttribute(String id, AttributeDTO attribute);
+  Boolean deleteAttribute(String id);
 }
