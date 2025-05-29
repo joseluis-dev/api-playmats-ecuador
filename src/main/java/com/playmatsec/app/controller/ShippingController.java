@@ -1,50 +1,80 @@
 package com.playmatsec.app.controller;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import lombok.RequiredArgsConstructor;
-
-import java.util.List;
+import com.playmatsec.app.controller.model.ShippingAddressDTO;
 import com.playmatsec.app.repository.model.ShippingAddress;
+import com.playmatsec.app.service.ShippingAddressService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class ShippingController {
+  private final ShippingAddressService shippingAddressService;
+
   @GetMapping("/shipping")
-  public ResponseEntity<List<ShippingAddress>> getShippingAddresses() {
-    return ResponseEntity.ok(List.of(new ShippingAddress()));
+  public ResponseEntity<List<ShippingAddress>> getShippingAddresses(
+    @RequestHeader Map<String, String> headers,
+    @RequestParam(required = false) String user,
+    @RequestParam(required = false) String fullname,
+    @RequestParam(required = false) String phone,
+    @RequestParam(required = false) String country,
+    @RequestParam(required = false) String state
+  ) {
+    log.info("headers: {}", headers);
+    List<ShippingAddress> addresses = shippingAddressService.getShippingAddresses(user, fullname, phone, country, state);
+    return addresses != null ? ResponseEntity.ok(addresses) : ResponseEntity.ok(Collections.emptyList());
   }
 
   @GetMapping("/shipping/{id}")
-  public ResponseEntity<ShippingAddress> getShippingAddressById(@PathVariable Long id) {
-    return ResponseEntity.ok(new ShippingAddress());
+  public ResponseEntity<ShippingAddress> getShippingAddressById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+    log.info("headers: {}", headers);
+    ShippingAddress address = shippingAddressService.getShippingAddressById(id);
+    return address != null ? ResponseEntity.ok(address) : ResponseEntity.notFound().build();
   }
 
   @DeleteMapping("/shipping/{id}")
-  public ResponseEntity<Boolean> deleteShippingAddressById(@PathVariable Long id) {
-    return ResponseEntity.ok(true);
+  public ResponseEntity<Boolean> deleteShippingAddressById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+    log.info("headers: {}", headers);
+    boolean deleted = shippingAddressService.deleteShippingAddress(id);
+    return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
   @PostMapping("/shipping")
-  public ResponseEntity<ShippingAddress> createShippingAddress(@RequestBody ShippingAddress shippingAddress) {
-    return ResponseEntity.ok(new ShippingAddress());
+  public ResponseEntity<ShippingAddress> createShippingAddress(@RequestHeader Map<String, String> headers, @RequestBody ShippingAddressDTO shippingAddress) {
+    log.info("headers: {}", headers);
+    ShippingAddress createdAddress = shippingAddressService.createShippingAddress(shippingAddress);
+    return createdAddress != null ? ResponseEntity.ok(createdAddress) : ResponseEntity.badRequest().build();
   }
 
   @PatchMapping("/shipping/{id}")
-  public ResponseEntity<ShippingAddress> updateShippingAddress(@PathVariable Long id, @RequestBody ShippingAddress shippingAddress) {
-    return ResponseEntity.ok(new ShippingAddress());
+  public ResponseEntity<ShippingAddress> updateShippingAddress(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody) {
+    log.info("headers: {}", headers);
+    ShippingAddress updatedAddress = shippingAddressService.updateShippingAddress(id, patchBody);
+    return updatedAddress != null ? ResponseEntity.ok(updatedAddress) : ResponseEntity.notFound().build();
   }
 
   @PutMapping("/shipping/{id}")
-  public ResponseEntity<ShippingAddress> replaceShippingAddress(@PathVariable Long id, @RequestBody ShippingAddress shippingAddress) {
-    return ResponseEntity.ok(new ShippingAddress());
+  public ResponseEntity<ShippingAddress> replaceShippingAddress(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ShippingAddressDTO shippingAddress) {
+    log.info("headers: {}", headers);
+    ShippingAddress replacedAddress = shippingAddressService.updateShippingAddress(id, shippingAddress);
+    return replacedAddress != null ? ResponseEntity.ok(replacedAddress) : ResponseEntity.notFound().build();
   }
 }

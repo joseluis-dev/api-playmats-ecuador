@@ -26,6 +26,10 @@ public class UserRepository {
         return repository.findById(id).orElse(null);
     }
 
+    public User getByEmail(String email) {
+        return repository.findByEmail(email);
+    }
+
     public User save(User user) {
         return repository.save(user);
     }

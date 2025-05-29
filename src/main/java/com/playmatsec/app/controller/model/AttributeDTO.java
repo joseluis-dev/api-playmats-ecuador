@@ -1,5 +1,7 @@
 package com.playmatsec.app.controller.model;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +19,6 @@ public class AttributeDTO {
   private String name;
   private String description;
   private String color;
-  private java.time.LocalDateTime createdAt;
-  private java.time.LocalDateTime updatedAt;
+  private LocalDateTime createdAt;
+  private LocalDateTime updatedAt;
 }

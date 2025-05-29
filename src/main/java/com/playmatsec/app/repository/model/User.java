@@ -44,6 +44,8 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<ShippingAddress> shippingAddresses;
+    
+    private LocalDateTime updatedAt;
 }
 
 enum Status {

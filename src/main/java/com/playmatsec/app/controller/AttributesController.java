@@ -59,10 +59,10 @@ public class AttributesController {
   }
 
   @DeleteMapping("/attributes/{id}")
-  public ResponseEntity<Boolean> deleteAttributeById(@PathVariable Long id) {
-    // This method should delete a specific attribute by its ID.
-    // For now, we will return a placeholder string.
-    return ResponseEntity.ok(true);
+  public ResponseEntity<Boolean> deleteAttributeById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+    log.info("headers: {}", headers);
+    boolean deleted = attributeService.deleteAttribute(id);
+    return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
   @PostMapping("/attributes")
@@ -75,17 +75,17 @@ public class AttributesController {
   }
 
   @PatchMapping("/attributes/{id}")
-  public ResponseEntity<Attribute> updateAttribute(@PathVariable Long id, @RequestBody Attribute attribute) {
-    // This method should update an existing attribute by its ID.
-    // For now, we will return a placeholder string.
-    return ResponseEntity.ok(new Attribute());
+  public ResponseEntity<Attribute> updateAttribute(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody) {
+    log.info("headers: {}", headers);
+    Attribute updatedAttribute = attributeService.updateAttribute(id, patchBody);
+    return updatedAttribute != null ? ResponseEntity.ok(updatedAttribute) : ResponseEntity.notFound().build();
   }
 
   @PutMapping("/attributes/{id}")
-  public ResponseEntity<Attribute> replaceAttribute(@PathVariable Long id, @RequestBody Attribute attribute) {
-    // This method should replace an existing attribute by its ID.
-    // For now, we will return a placeholder string.
-    return ResponseEntity.ok(new Attribute());
+  public ResponseEntity<Attribute> replaceAttribute(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody AttributeDTO attribute) {
+    log.info("headers: {}", headers);
+    Attribute replacedAttribute = attributeService.updateAttribute(id, attribute);
+    return replacedAttribute != null ? ResponseEntity.ok(replacedAttribute) : ResponseEntity.notFound().build();
   }
 
 }

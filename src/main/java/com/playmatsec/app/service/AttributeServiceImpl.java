@@ -94,6 +94,7 @@ public class AttributeServiceImpl implements AttributeService {
 				JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
 				JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(attribute)));
 				Attribute patched = objectMapper.treeToValue(target, Attribute.class);
+        patched.setUpdatedAt(LocalDateTime.now());
 				attributeRepository.save(patched);
 				return patched;
 			} catch (JsonProcessingException | JsonPatchException e) {
@@ -109,6 +110,7 @@ public class AttributeServiceImpl implements AttributeService {
   public Attribute updateAttribute(String id, AttributeDTO request) {
     Attribute attribute = attributeRepository.getById(Long.valueOf(id));
     if (attribute != null) {
+      request.setUpdatedAt(LocalDateTime.now());
       attribute.update(request);
       attributeRepository.save(attribute);
       return attribute;
