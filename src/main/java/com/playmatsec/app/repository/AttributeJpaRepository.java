@@ -4,7 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import com.playmatsec.app.repository.model.Attribute;
 
-public interface AttributeJpaRespository extends JpaRepository<Attribute, Long>, JpaSpecificationExecutor<Attribute> {
+public interface AttributeJpaRepository extends JpaRepository<Attribute, Long>, JpaSpecificationExecutor<Attribute> {
 
     // Custom query methods can be defined here if needed
     // For example:
