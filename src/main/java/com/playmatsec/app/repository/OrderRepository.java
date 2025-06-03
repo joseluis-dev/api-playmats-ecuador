@@ -38,7 +38,7 @@ public class OrderRepository {
     public List<Order> search(String userId, Date createdAt, Date updatedAt, String status) {
         OrderSearchCriteria spec = new OrderSearchCriteria();
         if (StringUtils.isNotBlank(userId)) {
-            spec.add(new SearchStatement(OrderConsts.ID, userId, SearchOperation.EQUAL));
+            spec.add(new SearchStatement(OrderConsts.USER, userId, SearchOperation.EQUAL));
         }
         if (createdAt != null) {
             spec.add(new SearchStatement(OrderConsts.CREATED_AT, createdAt, SearchOperation.EQUAL));
