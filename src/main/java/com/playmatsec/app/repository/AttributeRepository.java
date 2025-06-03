@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 @Repository
 @RequiredArgsConstructor
 public class AttributeRepository {
-  private final AttributeJpaRespository repository;
+  private final AttributeJpaRepository repository;
 
   public List<Attribute> getAttributes() {
     return repository.findAll();
