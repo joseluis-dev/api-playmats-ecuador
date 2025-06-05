@@ -1,5 +1,6 @@
 package com.playmatsec.app.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -22,9 +23,9 @@ public class CategoryServiceImpl implements CategoryService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<Category> getCategories(String name, String description) {
-        if (StringUtils.hasLength(name) || StringUtils.hasLength(description)) {
-            return categoryRepository.search(name, description);
+    public List<Category> getCategories(String name, String description, String color) {
+        if (StringUtils.hasLength(name) || StringUtils.hasLength(description) || StringUtils.hasLength(color)) {
+            return categoryRepository.search(name, description, color);
         }
         List<Category> categories = categoryRepository.getCategories();
         return categories.isEmpty() ? null : categories;
@@ -45,6 +46,7 @@ public class CategoryServiceImpl implements CategoryService {
     public Category createCategory(CategoryDTO request) {
         if (request != null && StringUtils.hasLength(request.getName())) {
             Category category = objectMapper.convertValue(request, Category.class);
+            category.setCreatedAt(java.time.LocalDateTime.now());
             return categoryRepository.save(category);
         }
         return null;
@@ -58,6 +60,7 @@ public class CategoryServiceImpl implements CategoryService {
                 JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
                 JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(category)));
                 Category patched = objectMapper.treeToValue(target, Category.class);
+                patched.setUpdatedAt(LocalDateTime.now());
                 categoryRepository.save(patched);
                 return patched;
             } catch (JsonProcessingException | JsonPatchException e) {
@@ -72,7 +75,7 @@ public class CategoryServiceImpl implements CategoryService {
     public Category updateCategory(String id, CategoryDTO request) {
         Category category = getCategoryById(id);
         if (category != null) {
-            // category.update(request); // Implementar si existe método update
+            category.update(request);
             categoryRepository.save(category);
             return category;
         }

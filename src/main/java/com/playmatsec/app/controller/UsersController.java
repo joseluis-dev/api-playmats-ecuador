@@ -34,10 +34,11 @@ public class UsersController {
     @RequestParam(required = false) String providerId,
     @RequestParam(required = false) String email,
     @RequestParam(required = false) String name,
-    @RequestParam(required = false) String role
+    @RequestParam(required = false) String role,
+    @RequestParam(required = false) String status
   ) {
     log.info("headers: {}", headers);
-    List<User> users = userService.getUsers(provider, providerId, email, name, role);
+    List<User> users = userService.getUsers(provider, providerId, email, name, role, status);
     return users != null ? ResponseEntity.ok(users) : ResponseEntity.ok(Collections.emptyList());
   }
 

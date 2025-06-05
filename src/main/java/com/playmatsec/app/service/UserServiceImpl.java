@@ -27,9 +27,9 @@ public class UserServiceImpl implements UserService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<User> getUsers(String provider, String providerId, String email, String name, String role) {
-        if (StringUtils.hasLength(provider) || StringUtils.hasLength(providerId) || StringUtils.hasLength(email) || StringUtils.hasLength(name) || StringUtils.hasLength(role)) {
-            List<User> users = userRepository.search(provider, providerId, email, name, role);
+    public List<User> getUsers(String provider, String providerId, String email, String name, String role, String status) {
+        if (StringUtils.hasLength(provider) || StringUtils.hasLength(providerId) || StringUtils.hasLength(email) || StringUtils.hasLength(name) || StringUtils.hasLength(role) || StringUtils.hasLength(status)) {
+            List<User> users = userRepository.search(provider, providerId, email, name, role, status);
             return users.isEmpty() ? null : users;
         }
         List<User> users = userRepository.getUsers();
@@ -94,9 +94,9 @@ public class UserServiceImpl implements UserService {
         User user = getUserById(id);
         if (user != null) {
             request.setUpdatedAt(LocalDateTime.now());
-            User updated = objectMapper.convertValue(request, User.class);
-            userRepository.save(updated);
-            return updated;
+            user.update(request);
+            userRepository.save(user);
+            return user;
         }
         return null;
     }

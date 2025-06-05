@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.playmatsec.app.controller.model.UserDTO;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -46,6 +48,18 @@ public class User {
     private List<ShippingAddress> shippingAddresses;
     
     private LocalDateTime updatedAt;
+
+    public void update (UserDTO updateRequest) {
+        this.provider = updateRequest.getProvider();
+        this.providerId = updateRequest.getProviderId();
+        this.email = updateRequest.getEmail();
+        this.name = updateRequest.getName();
+        this.avatarUrl = updateRequest.getAvatarUrl();
+        this.lastLogin = updateRequest.getLastLogin();
+        this.role = updateRequest.getRole();
+        this.status = Status.valueOf(updateRequest.getStatus());
+        this.updatedAt = LocalDateTime.now();
+    }
 }
 
 enum Status {

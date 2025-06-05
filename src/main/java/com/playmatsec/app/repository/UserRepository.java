@@ -38,7 +38,7 @@ public class UserRepository {
         repository.delete(user);
     }
 
-    public List<User> search(String provider, String providerId, String email, String name, String role) {
+    public List<User> search(String provider, String providerId, String email, String name, String role, String status) {
         UserSearchCriteria spec = new UserSearchCriteria();
         if (StringUtils.isNotBlank(provider)) {
             spec.add(new SearchStatement(UserConsts.PROVIDER, provider, SearchOperation.EQUAL));
@@ -54,6 +54,9 @@ public class UserRepository {
         }
         if (StringUtils.isNotBlank(role)) {
             spec.add(new SearchStatement(UserConsts.ROLE, role, SearchOperation.EQUAL));
+        }
+        if (StringUtils.isNotBlank(status)) {
+            spec.add(new SearchStatement(UserConsts.STATUS, status, SearchOperation.EQUAL));
         }
         return repository.findAll(spec);
     }

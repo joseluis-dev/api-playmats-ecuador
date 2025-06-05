@@ -10,4 +10,5 @@ public class UserConsts {
     public static final String CREATED_AT = "createdAt";
     public static final String LAST_LOGIN = "lastLogin";
     public static final String ROLE = "role";
+    public static final String STATUS = "status";
 }

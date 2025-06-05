@@ -2,6 +2,8 @@ package com.playmatsec.app.repository.model;
 
 import java.time.LocalDateTime;
 
+import com.playmatsec.app.controller.model.CategoryDTO;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,4 +28,11 @@ public class Category {
     private String color;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    public void update(CategoryDTO category) {
+        this.name = category.getName();
+        this.description = category.getDescription();
+        this.color = category.getColor();
+        this.updatedAt = LocalDateTime.now();
+    }
 }

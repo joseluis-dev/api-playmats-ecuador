@@ -33,10 +33,11 @@ public class CategoriesController {
   public ResponseEntity<List<Category>> getCategories(
     @RequestHeader Map<String, String> headers,
     @RequestParam(required = false) String name,
-    @RequestParam(required = false) String description
+    @RequestParam(required = false) String description,
+    @RequestParam(required = false) String color
   ) {
     log.info("headers: {}", headers);
-    List<Category> categories = categoryService.getCategories(name, description);
+    List<Category> categories = categoryService.getCategories(name, description, color);
     return categories != null ? ResponseEntity.ok(categories) : ResponseEntity.ok(Collections.emptyList());
   }
 

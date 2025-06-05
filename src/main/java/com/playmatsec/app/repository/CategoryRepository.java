@@ -33,13 +33,16 @@ public class CategoryRepository {
         repository.delete(category);
     }
 
-    public List<Category> search(String name, String description) {
+    public List<Category> search(String name, String description, String color) {
         CategorySearchCriteria spec = new CategorySearchCriteria();
         if (StringUtils.isNotBlank(name)) {
             spec.add(new SearchStatement(CategoryConsts.NAME, name, SearchOperation.MATCH));
         }
         if (StringUtils.isNotBlank(description)) {
             spec.add(new SearchStatement(CategoryConsts.DESCRIPTION, description, SearchOperation.MATCH));
+        }
+        if (StringUtils.isNotBlank(color)) {
+            spec.add(new SearchStatement(CategoryConsts.COLOR, color, SearchOperation.MATCH));
         }
         return repository.findAll(spec);
     }
