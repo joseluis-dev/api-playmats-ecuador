@@ -33,11 +33,14 @@ public class CartController {
   public ResponseEntity<List<Cart>> getCarts(
     @RequestHeader Map<String, String> headers,
     @RequestParam(required = false) String userId,
+    @RequestParam(required = false) Integer quantity,
+    @RequestParam(required = false) String price,
+    @RequestParam(required = false) String subtotal,
     @RequestParam(required = false) String createdAt,
     @RequestParam(required = false) String updatedAt
   ) {
     log.info("headers: {}", headers);
-    List<Cart> carts = cartService.getCarts(userId, createdAt, updatedAt);
+    List<Cart> carts = cartService.getCarts(userId, quantity, price, subtotal, createdAt, updatedAt);
     return carts != null ? ResponseEntity.ok(carts) : ResponseEntity.ok(Collections.emptyList());
   }
 

@@ -3,8 +3,10 @@ package com.playmatsec.app.repository.model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.playmatsec.app.controller.model.ProductDTO;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -41,12 +43,27 @@ public class Product {
         joinColumns = {@JoinColumn(name = "product_id")},
         inverseJoinColumns = {@JoinColumn(name = "category_id")}
     )
-    private Set<Category> categories;
+    private List<Category> categories;
     @ManyToMany
     @JoinTable(
         name = "product_atributes",
         joinColumns = {@JoinColumn(name = "product_id")},
         inverseJoinColumns = {@JoinColumn(name = "attribute_id")}
     )
-    private Set<Attribute> attributes;
+    private List<Attribute> attributes;
+    @ManyToMany(mappedBy = "products")
+    @JsonIgnore
+    private List<Cart> carts;
+
+    @OneToMany(mappedBy = "product")
+    @JsonIgnore
+    private List<OrderProduct> orderProducts;
+
+    public void update(ProductDTO product) {
+        this.name = product.getName();
+        this.description = product.getDescription();
+        this.price = product.getPrice();
+        this.isCustomizable = product.getIsCustomizable();
+        this.updatedAt = LocalDateTime.now();
+    }
 }

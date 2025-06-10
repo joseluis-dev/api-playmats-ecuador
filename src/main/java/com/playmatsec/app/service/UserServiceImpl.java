@@ -56,11 +56,11 @@ public class UserServiceImpl implements UserService {
             StringUtils.hasLength(request.getAvatarUrl()) &&
             StringUtils.hasLength(request.getRole()) &&
             request.getStatus() != null
-          ) {
+        ) {
             User user = objectMapper.convertValue(request, User.class);
             if (userRepository.getByEmail(request.getEmail()) != null) {
-              log.warn("User with email {} already exists", request.getEmail());
-              return null;
+                log.warn("User with email {} already exists", request.getEmail());
+                return null;
             }
             user.setId(UUID.randomUUID());
             user.setCreatedAt(LocalDateTime.now());

@@ -4,6 +4,7 @@ import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -15,7 +16,11 @@ import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.controller.model.CartDTO;
 import com.playmatsec.app.repository.CartRepository;
+import com.playmatsec.app.repository.ProductRepository;
+import com.playmatsec.app.repository.UserRepository;
 import com.playmatsec.app.repository.model.Cart;
+import com.playmatsec.app.repository.model.Product;
+import com.playmatsec.app.repository.model.User;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,10 +30,12 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<Cart> getCarts(String userId, String createdAt, String updatedAt) {
+    public List<Cart> getCarts(String userId, Integer quantity, String price, String subtotal, String createdAt, String updatedAt) {
         Date createdAtParsed = null;
         Date updatedAtParsed = null;
         if (createdAt != null) {
@@ -45,8 +52,13 @@ public class CartServiceImpl implements CartService {
                 log.warn("updatedAt no es una fecha válida: {}", updatedAt);
             }
         }
-        if (StringUtils.hasLength(userId) || createdAtParsed != null || updatedAtParsed != null) {
-            return cartRepository.search(userId, createdAtParsed, updatedAtParsed);
+        if (StringUtils.hasLength(userId)
+            || createdAtParsed != null
+            || updatedAtParsed != null
+            || quantity != null
+            || StringUtils.hasLength(price)
+            || StringUtils.hasLength(subtotal)) {
+            return cartRepository.search(userId, quantity, price, subtotal, createdAtParsed, updatedAtParsed);
         }
         List<Cart> carts = cartRepository.getCarts();
         return carts.isEmpty() ? null : carts;
@@ -65,9 +77,20 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Cart createCart(CartDTO request) {
-        if (request != null && request.getUser() != null && request.getQuantity() != null) {
+        if (request != null && request.getUser() != null && request.getQuantity() != null && request.getPrice() != null && request.getSubtotal() != null) {
             Cart cart = objectMapper.convertValue(request, Cart.class);
+            cart.setId(UUID.randomUUID());
             cart.setCreatedAt(LocalDateTime.now());
+            if (request.getUser().getId() != null) {
+                User user = userRepository.getById(request.getUser().getId());
+                cart.setUser(user);
+            }
+            if (request.getProducts() != null && !request.getProducts().isEmpty()) {
+                List<Product> products = request.getProducts().stream()
+                    .map(p -> productRepository.getById(p.getId()))
+                    .collect(Collectors.toList());
+                cart.setProducts(products);
+            }
             return cartRepository.save(cart);
         }
         return null;
@@ -81,6 +104,22 @@ public class CartServiceImpl implements CartService {
                 JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
                 JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(cart)));
                 Cart patched = objectMapper.treeToValue(target, Cart.class);
+                // Si el patch no incluye user o products, reasignar los originales
+                if (patched.getUser() != null && patched.getUser().getId() != null) {
+                    User user = userRepository.getById(patched.getUser().getId());
+                    patched.setUser(user);
+                } else {
+                    patched.setUser(cart.getUser());
+                }
+                if (patched.getProducts() != null && !patched.getProducts().isEmpty()) {
+                    List<Product> products = patched.getProducts().stream()
+                        .map(p -> productRepository.getById(p.getId()))
+                        .collect(Collectors.toList());
+                    patched.setProducts(products);
+                } else {
+                    patched.setProducts(cart.getProducts());
+                }
+                patched.setId(cart.getId());
                 patched.setUpdatedAt(LocalDateTime.now());
                 cartRepository.save(patched);
                 return patched;
@@ -96,9 +135,17 @@ public class CartServiceImpl implements CartService {
     public Cart updateCart(String id, CartDTO request) {
         Cart cart = getCartById(id);
         if (cart != null) {
-            request.setUpdatedAt(LocalDateTime.now());
-            // Aquí deberías tener un método update en Cart para aplicar los cambios del DTO
-            // cart.update(request);
+            if (request.getUser() != null && request.getUser().getId() != null) {
+                User user = userRepository.getById(request.getUser().getId());
+                cart.setUser(user);
+            }
+            if (request.getProducts() != null && !request.getProducts().isEmpty()) {
+                List<Product> products = request.getProducts().stream()
+                    .map(p -> productRepository.getById(p.getId()))
+                    .collect(Collectors.toList());
+                cart.setProducts(products);
+            }
+            cart.update(request);
             cartRepository.save(cart);
             return cart;
         }

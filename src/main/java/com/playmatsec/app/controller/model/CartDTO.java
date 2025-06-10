@@ -2,8 +2,9 @@ package com.playmatsec.app.controller.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.List;
 
+import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.model.User;
 
 import lombok.AllArgsConstructor;
@@ -20,11 +21,11 @@ import lombok.ToString;
 @Builder
 @ToString
 public class CartDTO {
-    private UUID id;
     private User user;
     private Integer quantity;
     private BigDecimal price;
     private BigDecimal subtotal;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<Product> products;
 }

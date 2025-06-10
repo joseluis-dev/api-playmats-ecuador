@@ -1,5 +1,6 @@
 package com.playmatsec.app.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -44,8 +45,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product createProduct(ProductDTO request) {
-        if (request != null && StringUtils.hasLength(request.getName())) {
+        if (request != null
+            && StringUtils.hasLength(request.getName())
+            && StringUtils.hasLength(request.getDescription())
+            && request.getPrice() != null
+            && request.getIsCustomizable() != null
+            ) {
             Product product = objectMapper.convertValue(request, Product.class);
+            product.setId(UUID.randomUUID());
+            product.setCreatedAt(LocalDateTime.now());
             return productRepository.save(product);
         }
         return null;
@@ -59,6 +67,7 @@ public class ProductServiceImpl implements ProductService {
                 JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
                 JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(product)));
                 Product patched = objectMapper.treeToValue(target, Product.class);
+                patched.setUpdatedAt(LocalDateTime.now());
                 productRepository.save(patched);
                 return patched;
             } catch (JsonProcessingException | JsonPatchException e) {
@@ -73,7 +82,7 @@ public class ProductServiceImpl implements ProductService {
     public Product updateProduct(String id, ProductDTO request) {
         Product product = getProductById(id);
         if (product != null) {
-            // product.update(request); // Implementar si existe método update
+            product.update(request);
             productRepository.save(product);
             return product;
         }
