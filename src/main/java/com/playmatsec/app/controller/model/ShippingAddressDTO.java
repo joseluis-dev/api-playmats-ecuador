@@ -1,7 +1,10 @@
 package com.playmatsec.app.controller.model;
 
 import lombok.*;
-import java.util.UUID;
+
+import com.playmatsec.app.repository.model.Country;
+import com.playmatsec.app.repository.model.State;
+import com.playmatsec.app.repository.model.User;
 
 @Getter
 @Setter
@@ -10,12 +13,14 @@ import java.util.UUID;
 @Builder
 @ToString
 public class ShippingAddressDTO {
-    private UUID id;
-    private String addressLine1;
-    private String addressLine2;
+    private User user;
+    private String fullname;
+    private String phone;
+    private Country country;
+    private State state;
     private String city;
     private String postalCode;
-    private StateDTO state;
-    private CountryDTO country;
-    private UserDTO user;
+    private String addressOne;
+    private String addressTwo;
+    private Boolean current;
 }

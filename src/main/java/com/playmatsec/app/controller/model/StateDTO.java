@@ -1,7 +1,8 @@
 package com.playmatsec.app.controller.model;
 
 import lombok.*;
-import java.util.UUID;
+
+import com.playmatsec.app.repository.model.Country;
 
 @Getter
 @Setter
@@ -10,8 +11,6 @@ import java.util.UUID;
 @Builder
 @ToString
 public class StateDTO {
-    private UUID id;
-    private String name;
-    private String code;
-    private CountryDTO country;
+    private String nombre;
+    private Country country;
 }

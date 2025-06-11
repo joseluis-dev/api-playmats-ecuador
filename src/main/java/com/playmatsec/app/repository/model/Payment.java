@@ -26,6 +26,7 @@ public class Payment {
 
     @OneToOne
     @JoinColumn(name = "order_id")
+    @com.fasterxml.jackson.annotation.JsonBackReference(value = "order-payment")
     private Order order;
 
     private BigDecimal amout;

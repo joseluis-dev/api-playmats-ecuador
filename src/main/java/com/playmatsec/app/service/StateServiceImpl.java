@@ -9,7 +9,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.controller.model.StateDTO;
+import com.playmatsec.app.repository.CountryRepository;
 import com.playmatsec.app.repository.StateRepository;
+import com.playmatsec.app.repository.model.Country;
 import com.playmatsec.app.repository.model.State;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class StateServiceImpl implements StateService {
     private final StateRepository stateRepository;
+    private final CountryRepository countryRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -43,8 +46,12 @@ public class StateServiceImpl implements StateService {
 
     @Override
     public State createState(StateDTO request) {
-        if (request != null && StringUtils.hasLength(request.getName())) {
+        if (request != null && StringUtils.hasLength(request.getNombre())) {
             State state = objectMapper.convertValue(request, State.class);
+            if (request.getCountry() != null && request.getCountry().getId() != null) {
+                Country country = countryRepository.getById(request.getCountry().getId());
+                state.setCountry(country);
+            }
             return stateRepository.save(state);
         }
         return null;
@@ -58,6 +65,10 @@ public class StateServiceImpl implements StateService {
                 JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
                 JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(state)));
                 State patched = objectMapper.treeToValue(target, State.class);
+                if (patched.getCountry() != null && patched.getCountry().getId() != null) {
+                    Country country = countryRepository.getById(patched.getCountry().getId());
+                    patched.setCountry(country);
+                }
                 stateRepository.save(patched);
                 return patched;
             } catch (JsonProcessingException | JsonPatchException e) {
@@ -72,7 +83,12 @@ public class StateServiceImpl implements StateService {
     public State updateState(String id, StateDTO request) {
         State state = getStateById(id);
         if (state != null) {
-            // state.update(request); // Implementar si existe método update
+            log.info("Updating state with ID: {} and data: {}", id, request.getCountry());
+            if (request.getCountry() != null && request.getCountry().getId() != null) {
+                Country country = countryRepository.getById(request.getCountry().getId());
+                state.setCountry(country);
+            }
+            state.update(request);
             stateRepository.save(state);
             return state;
         }

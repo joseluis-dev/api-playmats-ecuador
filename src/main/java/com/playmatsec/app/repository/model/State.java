@@ -1,6 +1,10 @@
 package com.playmatsec.app.repository.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.playmatsec.app.controller.model.StateDTO;
+
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -23,7 +27,12 @@ public class State {
 
     private String nombre;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "country_id")
+    @JsonBackReference
     private Country country;
+
+    public void update(StateDTO state) {
+        this.nombre = state.getNombre();
+    }
 }

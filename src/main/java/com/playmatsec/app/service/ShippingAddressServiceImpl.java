@@ -9,8 +9,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.controller.model.ShippingAddressDTO;
+import com.playmatsec.app.repository.CountryRepository;
 import com.playmatsec.app.repository.ShippingAddressRepository;
+import com.playmatsec.app.repository.StateRepository;
+import com.playmatsec.app.repository.UserRepository;
+import com.playmatsec.app.repository.model.Country;
 import com.playmatsec.app.repository.model.ShippingAddress;
+import com.playmatsec.app.repository.model.State;
+import com.playmatsec.app.repository.model.User;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,6 +26,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ShippingAddressServiceImpl implements ShippingAddressService {
     private final ShippingAddressRepository shippingAddressRepository;
+    private final StateRepository stateRepository;
+    private final CountryRepository countryRepository;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -43,8 +53,29 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
 
     @Override
     public ShippingAddress createShippingAddress(ShippingAddressDTO request) {
-        if (request != null && StringUtils.hasLength(request.getAddressLine1())) {
+        if (request != null
+            && request.getUser() != null
+            && StringUtils.hasLength(request.getFullname())
+            && StringUtils.hasLength(request.getPhone())
+            && request.getCountry() != null
+            && request.getState() != null
+            && StringUtils.hasLength(request.getCity())
+            && StringUtils.hasLength(request.getPostalCode())
+            && StringUtils.hasLength(request.getAddressOne())
+            && StringUtils.hasLength(request.getAddressTwo())
+            && request.getCurrent() != null
+        ) {
             ShippingAddress shippingAddress = objectMapper.convertValue(request, ShippingAddress.class);
+            if (request.getUser().getId() != null) {
+                User user = userRepository.getById(request.getUser().getId());
+                shippingAddress.setUser(user);
+            }
+            if (request.getCountry().getId() != null) {
+                shippingAddress.setCountry(request.getCountry());
+            }
+            if (request.getState().getId() != null) {
+                shippingAddress.setState(request.getState());
+            }
             return shippingAddressRepository.save(shippingAddress);
         }
         return null;
@@ -58,6 +89,14 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
                 JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
                 JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(shippingAddress)));
                 ShippingAddress patched = objectMapper.treeToValue(target, ShippingAddress.class);
+                if (patched.getCountry() != null && patched.getCountry().getId() != null) {
+                    Country country = countryRepository.getById(patched.getCountry().getId());
+                    patched.setCountry(country);
+                }
+                if (patched.getState() != null && patched.getState().getId() != null) {
+                    State state = stateRepository.getById(patched.getState().getId());
+                    patched.setState(state);
+                }
                 shippingAddressRepository.save(patched);
                 return patched;
             } catch (JsonProcessingException | JsonPatchException e) {
@@ -72,7 +111,15 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     public ShippingAddress updateShippingAddress(String id, ShippingAddressDTO request) {
         ShippingAddress shippingAddress = getShippingAddressById(id);
         if (shippingAddress != null) {
-            // shippingAddress.update(request); // Implementar si existe método update
+            if (request.getCountry() != null && request.getCountry().getId() != null) {
+                Country country = countryRepository.getById(request.getCountry().getId());
+                shippingAddress.setCountry(country);
+            }
+            if (request.getState() != null && request.getState().getId() != null) {
+                State state = stateRepository.getById(request.getState().getId());
+                shippingAddress.setState(state);
+            }
+            shippingAddress.update(request);
             shippingAddressRepository.save(shippingAddress);
             return shippingAddress;
         }

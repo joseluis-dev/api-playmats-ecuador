@@ -1,5 +1,8 @@
 package com.playmatsec.app.repository.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.playmatsec.app.controller.model.ShippingAddressDTO;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,6 +26,7 @@ public class ShippingAddress {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     private String fullname;
@@ -41,4 +45,16 @@ public class ShippingAddress {
     private String addressOne;
     private String addressTwo;
     private Boolean current;
+
+    public void update(ShippingAddressDTO shippingAddress) {
+        this.fullname = shippingAddress.getFullname();
+        this.phone = shippingAddress.getPhone();
+        this.country = shippingAddress.getCountry();
+        this.state = shippingAddress.getState();
+        this.city = shippingAddress.getCity();
+        this.postalCode = shippingAddress.getPostalCode();
+        this.addressOne = shippingAddress.getAddressOne();
+        this.addressTwo = shippingAddress.getAddressTwo();
+        this.current = shippingAddress.getCurrent();
+    }
 }

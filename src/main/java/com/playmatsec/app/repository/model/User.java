@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.playmatsec.app.controller.model.UserDTO;
 
 import jakarta.persistence.Entity;
@@ -39,9 +40,11 @@ public class User {
     private Status status;
 
     @OneToMany(mappedBy = "user")
+    @JsonManagedReference(value = "user-orders")
     private List<Order> orders;
 
     @OneToOne(mappedBy = "user")
+    @JsonManagedReference(value = "user-cart")
     private Cart cart;
 
     @OneToMany(mappedBy = "user")

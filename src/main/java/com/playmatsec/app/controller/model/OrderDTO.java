@@ -17,8 +17,9 @@ public class OrderDTO {
     private UserDTO user;
     private PaymentDTO payment;
     private ShippingAddressDTO shippingAddress;
+    private String billingAddress;
     private List<OrderProductDTO> orderProducts;
-    private BigDecimal total;
+    private BigDecimal totalAmount;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

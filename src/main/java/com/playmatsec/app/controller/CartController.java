@@ -1,5 +1,6 @@
 package com.playmatsec.app.controller;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +35,8 @@ public class CartController {
     @RequestHeader Map<String, String> headers,
     @RequestParam(required = false) String userId,
     @RequestParam(required = false) Integer quantity,
-    @RequestParam(required = false) String price,
-    @RequestParam(required = false) String subtotal,
+    @RequestParam(required = false) BigDecimal price,
+    @RequestParam(required = false) BigDecimal subtotal,
     @RequestParam(required = false) String createdAt,
     @RequestParam(required = false) String updatedAt
   ) {

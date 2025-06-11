@@ -2,6 +2,10 @@ package com.playmatsec.app.repository.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.playmatsec.app.controller.model.CountryDTO;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,6 +28,11 @@ public class Country {
 
     private String nombre;
 
-    @OneToMany(mappedBy = "country")
+    @OneToMany(mappedBy = "country", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<State> states;
+
+    public void update(CountryDTO country) {
+        this.nombre = country.getNombre();
+    }
 }

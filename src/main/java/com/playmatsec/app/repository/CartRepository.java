@@ -1,5 +1,6 @@
 package com.playmatsec.app.repository;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.util.List;
 import java.util.UUID;
@@ -35,7 +36,7 @@ public class CartRepository {
         repository.delete(cart);
     }
 
-    public List<Cart> search(String userId, Integer quantity, String price, String subtotal, Date createdAt, Date updatedAt) {
+    public List<Cart> search(String userId, Integer quantity, BigDecimal price, BigDecimal subtotal, Date createdAt, Date updatedAt) {
         CartSearchCriteria spec = new CartSearchCriteria();
         if (StringUtils.isNotBlank(userId)) {
             spec.add(new SearchStatement(CartConsts.USER, userId, SearchOperation.EQUAL));
@@ -49,11 +50,11 @@ public class CartRepository {
         if (quantity != null) {
             spec.add(new SearchStatement(CartConsts.QUANTITY, quantity, SearchOperation.EQUAL));
         }
-        if (StringUtils.isNotBlank(price)) {
-            spec.add(new SearchStatement(CartConsts.PRICE, price, SearchOperation.MATCH));
+        if (price != null) {
+            spec.add(new SearchStatement(CartConsts.PRICE, price, SearchOperation.EQUAL));
         }
-        if (StringUtils.isNotBlank(subtotal)) {
-            spec.add(new SearchStatement(CartConsts.SUBTOTAL, subtotal, SearchOperation.MATCH));
+        if (subtotal != null) {
+            spec.add(new SearchStatement(CartConsts.SUBTOTAL, subtotal, SearchOperation.EQUAL));
         }
         return repository.findAll(spec);
     }

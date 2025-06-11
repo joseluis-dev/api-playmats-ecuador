@@ -1,5 +1,7 @@
 package com.playmatsec.app.repository.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -31,6 +33,7 @@ public class Resource {
 
     @ManyToOne
     @JoinColumn(name = "product_id")
+    @JsonBackReference(value = "product-resources")
     private Product product;
 
     @Enumerated(EnumType.STRING)

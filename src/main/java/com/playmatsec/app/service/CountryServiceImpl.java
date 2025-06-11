@@ -43,7 +43,7 @@ public class CountryServiceImpl implements CountryService {
 
     @Override
     public Country createCountry(CountryDTO request) {
-        if (request != null && StringUtils.hasLength(request.getName())) {
+        if (request != null && StringUtils.hasLength(request.getNombre())) {
             Country country = objectMapper.convertValue(request, Country.class);
             return countryRepository.save(country);
         }
@@ -72,7 +72,7 @@ public class CountryServiceImpl implements CountryService {
     public Country updateCountry(String id, CountryDTO request) {
         Country country = getCountryById(id);
         if (country != null) {
-            // country.update(request); // Implementar si existe método update
+            country.update(request); // Implementar si existe método update
             countryRepository.save(country);
             return country;
         }

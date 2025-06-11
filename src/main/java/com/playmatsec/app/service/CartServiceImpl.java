@@ -1,5 +1,6 @@
 package com.playmatsec.app.service;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +36,7 @@ public class CartServiceImpl implements CartService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<Cart> getCarts(String userId, Integer quantity, String price, String subtotal, String createdAt, String updatedAt) {
+    public List<Cart> getCarts(String userId, Integer quantity, BigDecimal price, BigDecimal subtotal, String createdAt, String updatedAt) {
         Date createdAtParsed = null;
         Date updatedAtParsed = null;
         if (createdAt != null) {
@@ -56,8 +57,8 @@ public class CartServiceImpl implements CartService {
             || createdAtParsed != null
             || updatedAtParsed != null
             || quantity != null
-            || StringUtils.hasLength(price)
-            || StringUtils.hasLength(subtotal)) {
+            || price != null
+            || subtotal != null) {
             return cartRepository.search(userId, quantity, price, subtotal, createdAtParsed, updatedAtParsed);
         }
         List<Cart> carts = cartRepository.getCarts();

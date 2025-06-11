@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.playmatsec.app.controller.model.ProductDTO;
 
 import jakarta.persistence.Entity;
@@ -36,6 +37,7 @@ public class Product {
     private Boolean isCustomizable;
 
     @OneToMany(mappedBy = "product")
+    @JsonManagedReference(value = "product-resources")
     private List<Resource> resources;
     @ManyToMany
     @JoinTable(

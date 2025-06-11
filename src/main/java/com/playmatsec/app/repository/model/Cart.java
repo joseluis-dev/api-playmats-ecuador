@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.playmatsec.app.controller.model.CartDTO;
 
 import jakarta.persistence.CascadeType;
@@ -32,7 +32,7 @@ public class Cart {
 
     @OneToOne
     @JoinColumn(name = "user_id")
-    @JsonIgnore
+    @JsonBackReference(value = "user-cart")
     private User user;
 
     private Integer quantity;

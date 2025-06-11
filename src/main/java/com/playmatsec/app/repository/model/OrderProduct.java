@@ -3,7 +3,7 @@ package com.playmatsec.app.repository.model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,12 +28,12 @@ public class OrderProduct {
 
     @ManyToOne
     @JoinColumn(name = "order_id")
-    @JsonIgnore
+    @JsonBackReference(value = "order-orderProducts")
     private Order order;
 
     @ManyToOne
     @JoinColumn(name = "product_id")
-    @JsonIgnore
+    @JsonBackReference(value = "product-orderProducts")
     private Product product;
 
     private Integer quantity;

@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -29,6 +32,7 @@ public class Order {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonBackReference(value = "user-orders")
     private User user;
 
     @Enumerated(EnumType.STRING)
@@ -45,9 +49,11 @@ public class Order {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "order")
+    @JsonManagedReference(value = "order-orderProducts")
     private List<OrderProduct> orderProducts;
 
     @OneToOne(mappedBy = "order")
+    @JsonManagedReference(value = "order-payment")
     private Payment payment;
 }
 
