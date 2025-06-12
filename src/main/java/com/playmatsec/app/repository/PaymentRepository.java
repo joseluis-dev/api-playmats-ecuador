@@ -34,13 +34,31 @@ public class PaymentRepository {
         repository.delete(payment);
     }
 
-    public List<Payment> search(String orderId, String providerPaymentId) {
+    public List<Payment> search(String order, String amount, String providerPaymentId, String method, String status, String imageUrl, String paidAt, String createdAt) {
         PaymentSearchCriteria spec = new PaymentSearchCriteria();
-        if (StringUtils.isNotBlank(orderId)) {
-            spec.add(new SearchStatement(PaymentConsts.ORDER, orderId, SearchOperation.EQUAL));
+        if (StringUtils.isNotBlank(order)) {
+            spec.add(new SearchStatement(PaymentConsts.ORDER, order, SearchOperation.EQUAL));
+        }
+        if (StringUtils.isNotBlank(amount)) {
+            spec.add(new SearchStatement(PaymentConsts.AMOUNT, amount, SearchOperation.EQUAL));
         }
         if (StringUtils.isNotBlank(providerPaymentId)) {
-            spec.add(new SearchStatement(PaymentConsts.PROVIDER_PAYMENT_ID, providerPaymentId, SearchOperation.MATCH));
+            spec.add(new SearchStatement(PaymentConsts.PROVIDER_PAYMENT_ID, providerPaymentId, SearchOperation.EQUAL));
+        }
+        if (StringUtils.isNotBlank(method)) {
+            spec.add(new SearchStatement(PaymentConsts.METHOD, method, SearchOperation.MATCH));
+        }
+        if (StringUtils.isNotBlank(status)) {
+            spec.add(new SearchStatement(PaymentConsts.STATUS, status, SearchOperation.MATCH));
+        }
+        if (StringUtils.isNotBlank(imageUrl)) {
+            spec.add(new SearchStatement(PaymentConsts.IMAGE_URL, imageUrl, SearchOperation.EQUAL));
+        }
+        if (StringUtils.isNotBlank(paidAt)) {
+            spec.add(new SearchStatement(PaymentConsts.PAID_AT, paidAt, SearchOperation.MATCH));
+        }
+        if (StringUtils.isNotBlank(createdAt)) {
+            spec.add(new SearchStatement(PaymentConsts.CREATED_AT, createdAt, SearchOperation.MATCH));
         }
         return repository.findAll(spec);
     }

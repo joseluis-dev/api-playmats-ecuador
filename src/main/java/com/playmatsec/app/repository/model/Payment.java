@@ -4,6 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.playmatsec.app.repository.utils.Consts.PaymentMethod;
+import com.playmatsec.app.repository.utils.Consts.PaymentStatus;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -26,10 +30,10 @@ public class Payment {
 
     @OneToOne
     @JoinColumn(name = "order_id")
-    @com.fasterxml.jackson.annotation.JsonBackReference(value = "order-payment")
+    @JsonBackReference(value = "order-payment")
     private Order order;
 
-    private BigDecimal amout;
+    private BigDecimal amount;
     private String providerPaymentId;
 
     @Enumerated(EnumType.STRING)
@@ -41,12 +45,4 @@ public class Payment {
     private String imageUrl;
     private LocalDateTime paidAt;
     private LocalDateTime createdAt;
-}
-
-enum PaymentStatus {
-    PENDING, COMPLETED, FAILED
-}
-
-enum PaymentMethod {
-    CREDIT_CARD, PAYPAL, TRANSFER, CASH
 }

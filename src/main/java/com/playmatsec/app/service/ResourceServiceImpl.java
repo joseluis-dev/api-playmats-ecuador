@@ -9,7 +9,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.controller.model.ResourceDTO;
+import com.playmatsec.app.repository.ProductRepository;
 import com.playmatsec.app.repository.ResourceRepository;
+import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.model.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,12 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ResourceServiceImpl implements ResourceService {
     private final ResourceRepository resourceRepository;
+    private final ProductRepository productRepository;
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<Resource> getResources(String name, String url, String hosting) {
-        if (StringUtils.hasLength(name) || StringUtils.hasLength(url) || StringUtils.hasLength(hosting)) {
-            return resourceRepository.search(name, url, hosting);
+    public List<Resource> getResources(String name, String url, String hosting, String thumbnail, String watermark, String type, Boolean isBanner) {
+        if (StringUtils.hasLength(name) || StringUtils.hasLength(url) || StringUtils.hasLength(hosting) || StringUtils.hasLength(thumbnail) || StringUtils.hasLength(watermark) || StringUtils.hasLength(type) || isBanner != null) {
+            return resourceRepository.search(name, url, hosting, thumbnail, watermark, type, isBanner);
         }
         List<Resource> resources = resourceRepository.getResources();
         return resources.isEmpty() ? null : resources;
@@ -58,6 +61,12 @@ public class ResourceServiceImpl implements ResourceService {
                 JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
                 JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(resource)));
                 Resource patched = objectMapper.treeToValue(target, Resource.class);
+                if (patched.getProduct() == null) {
+                    patched.setProduct(resource.getProduct());
+                } else if (patched.getProduct().getId() != null) {
+                    Product product = productRepository.getById(patched.getProduct().getId());
+                    patched.setProduct(product);
+                }
                 resourceRepository.save(patched);
                 return patched;
             } catch (JsonProcessingException | JsonPatchException e) {
@@ -72,7 +81,7 @@ public class ResourceServiceImpl implements ResourceService {
     public Resource updateResource(String id, ResourceDTO request) {
         Resource resource = getResourceById(id);
         if (resource != null) {
-            // resource.update(request); // Implementar si existe método update
+            resource.update(request);
             resourceRepository.save(resource);
             return resource;
         }

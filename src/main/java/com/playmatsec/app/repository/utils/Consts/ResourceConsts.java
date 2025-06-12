@@ -7,4 +7,6 @@ public class ResourceConsts {
     public static final String THUMBNAIL = "thumbnail";
     public static final String WATERMARK = "watermark";
     public static final String HOSTING = "hosting";
+    public static final String TYPE = "type";
+    public static final String IS_BANNER = "isBanner";
 }

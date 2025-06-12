@@ -32,11 +32,17 @@ public class PaymentsController {
   @GetMapping("/payments")
   public ResponseEntity<List<Payment>> getPayments(
     @RequestHeader Map<String, String> headers,
-    @RequestParam(required = false) String orderId,
-    @RequestParam(required = false) String providerPaymentId
+    @RequestParam(required = false) String order,
+    @RequestParam(required = false) String amount,
+    @RequestParam(required = false) String providerPaymentId,
+    @RequestParam(required = false) String method,
+    @RequestParam(required = false) String status,
+    @RequestParam(required = false) String imageUrl,
+    @RequestParam(required = false) String paidAt,
+    @RequestParam(required = false) String createdAt
   ) {
     log.info("headers: {}", headers);
-    List<Payment> payments = paymentService.getPayments(orderId, providerPaymentId);
+    List<Payment> payments = paymentService.getPayments(order, amount, providerPaymentId, method, status, imageUrl, paidAt, createdAt);
     return payments != null ? ResponseEntity.ok(payments) : ResponseEntity.ok(Collections.emptyList());
   }
 

@@ -5,7 +5,7 @@ import com.playmatsec.app.repository.model.Payment;
 import com.playmatsec.app.controller.model.PaymentDTO;
 
 public interface PaymentService {
-    List<Payment> getPayments(String orderId, String providerPaymentId);
+    List<Payment> getPayments(String order, String amount, String providerPaymentId, String method, String status, String imageUrl, String paidAt, String createdAt);
     Payment getPaymentById(String id);
     Payment createPayment(PaymentDTO payment);
     Payment updatePayment(String id, String updateRequest);

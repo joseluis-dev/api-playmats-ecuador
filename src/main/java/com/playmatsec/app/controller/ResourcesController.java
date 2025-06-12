@@ -34,10 +34,14 @@ public class ResourcesController {
     @RequestHeader Map<String, String> headers,
     @RequestParam(required = false) String name,
     @RequestParam(required = false) String url,
-    @RequestParam(required = false) String hosting
+    @RequestParam(required = false) String thumbnail,
+    @RequestParam(required = false) String watermark,
+    @RequestParam(required = false) String hosting,
+    @RequestParam(required = false) String type,
+    @RequestParam(required = false) Boolean isBanner
   ) {
     log.info("headers: {}", headers);
-    List<Resource> resources = resourceService.getResources(name, url, hosting);
+    List<Resource> resources = resourceService.getResources(name, url, hosting, thumbnail, watermark, type, isBanner);
     return resources != null ? ResponseEntity.ok(resources) : ResponseEntity.ok(Collections.emptyList());
   }
 

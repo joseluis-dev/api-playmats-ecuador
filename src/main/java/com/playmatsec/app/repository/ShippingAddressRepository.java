@@ -33,7 +33,7 @@ public class ShippingAddressRepository {
         repository.delete(shippingAddress);
     }
 
-    public List<ShippingAddress> search(String user, String fullname, String phone, String country, String state) {
+    public List<ShippingAddress> search(String user, String fullname, String phone, String country, String state, String city, String postalCode, String addressOne, String addressTwo, Boolean current) {
         ShippingAddressSearchCriteria spec = new ShippingAddressSearchCriteria();
         if (StringUtils.isNotBlank(user)) {
             spec.add(new SearchStatement(ShippingAddressConsts.USER, user, SearchOperation.EQUAL));
@@ -50,6 +50,22 @@ public class ShippingAddressRepository {
         if (StringUtils.isNotBlank(state)) {
             spec.add(new SearchStatement(ShippingAddressConsts.STATE, state, SearchOperation.EQUAL));
         }
+        if (StringUtils.isNotBlank(city)) {
+            spec.add(new SearchStatement(ShippingAddressConsts.CITY, city, SearchOperation.MATCH));
+        }
+        if (StringUtils.isNotBlank(postalCode)) {
+            spec.add(new SearchStatement(ShippingAddressConsts.POSTAL_CODE, postalCode, SearchOperation.EQUAL));
+        }
+        if (StringUtils.isNotBlank(addressOne)) {
+            spec.add(new SearchStatement(ShippingAddressConsts.ADDRESS_ONE, addressOne, SearchOperation.MATCH));
+        }
+        if (StringUtils.isNotBlank(addressTwo)) {
+            spec.add(new SearchStatement(ShippingAddressConsts.ADDRESS_TWO, addressTwo, SearchOperation.MATCH));
+        }
+        if (current != null) {
+            spec.add(new SearchStatement(ShippingAddressConsts.CURRENT, current, SearchOperation.EQUAL));
+        }
+
         return repository.findAll(spec);
     }
 }

@@ -1,6 +1,8 @@
 package com.playmatsec.app.repository.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.playmatsec.app.controller.model.ResourceDTO;
+import com.playmatsec.app.repository.utils.Consts.ResourceType;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -40,8 +42,14 @@ public class Resource {
     private ResourceType type;
 
     private Boolean isBanner;
-}
 
-enum ResourceType {
-    VIDEO, IMAGE, PDF, DOCX
+    public void update(ResourceDTO resource) {
+        this.name = resource.getName();
+        this.url = resource.getUrl();
+        this.thumbnail = resource.getThumbnail();
+        this.watermark = resource.getWatermark();
+        this.hosting = resource.getHosting();
+        this.type = resource.getType();
+        this.isBanner = resource.getIsBanner();
+    }
 }

@@ -32,9 +32,9 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<ShippingAddress> getShippingAddresses(String user, String fullname, String phone, String country, String state) {
-        if (StringUtils.hasLength(user) || StringUtils.hasLength(fullname) || StringUtils.hasLength(phone) || StringUtils.hasLength(country) || StringUtils.hasLength(state)) {
-            return shippingAddressRepository.search(user, fullname, phone, country, state);
+    public List<ShippingAddress> getShippingAddresses(String user, String fullname, String phone, String country, String state, String city, String postalCode, String addressOne, String addressTwo, Boolean current) {
+        if (StringUtils.hasLength(user) || StringUtils.hasLength(fullname) || StringUtils.hasLength(phone) || StringUtils.hasLength(country) || StringUtils.hasLength(state) || StringUtils.hasLength(city) || StringUtils.hasLength(postalCode) || StringUtils.hasLength(addressOne) || StringUtils.hasLength(addressTwo) || current != null) {
+            return shippingAddressRepository.search(user, fullname, phone, country, state, city, postalCode, addressOne, addressTwo, current);
         }
         List<ShippingAddress> addresses = shippingAddressRepository.getShippingAddresses();
         return addresses.isEmpty() ? null : addresses;

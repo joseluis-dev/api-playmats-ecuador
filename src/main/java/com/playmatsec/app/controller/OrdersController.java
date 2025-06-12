@@ -32,13 +32,17 @@ public class OrdersController {
   @GetMapping("/orders")
   public ResponseEntity<List<Order>> getOrders(
     @RequestHeader Map<String, String> headers,
-    @RequestParam(required = false) String userId,
+    @RequestParam(required = false) String user,
     @RequestParam(required = false) String createdAt,
     @RequestParam(required = false) String updatedAt,
-    @RequestParam(required = false) String status
+    @RequestParam(required = false) String status,
+    @RequestParam(required = false) String totalAmount,
+    @RequestParam(required = false) String shippingAddress,
+    @RequestParam(required = false) String billingAddress,
+    @RequestParam(required = false) String payment
   ) {
     log.info("headers: {}", headers);
-    List<Order> orders = orderService.getOrders(userId, createdAt, updatedAt, status);
+    List<Order> orders = orderService.getOrders(user, createdAt, updatedAt, status, totalAmount, shippingAddress, billingAddress, payment);
     return orders != null ? ResponseEntity.ok(orders) : ResponseEntity.ok(Collections.emptyList());
   }
 

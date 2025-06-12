@@ -33,16 +33,28 @@ public class ResourceRepository {
         repository.delete(resource);
     }
 
-    public List<Resource> search(String name, String url, String hosting) {
+    public List<Resource> search(String name, String url, String hosting, String thumbnail, String watermark, String type, Boolean isBanner) {
         ResourceSearchCriteria spec = new ResourceSearchCriteria();
         if (StringUtils.isNotBlank(name)) {
             spec.add(new SearchStatement(ResourceConsts.NAME, name, SearchOperation.MATCH));
         }
         if (StringUtils.isNotBlank(url)) {
-            spec.add(new SearchStatement(ResourceConsts.URL, url, SearchOperation.MATCH));
+            spec.add(new SearchStatement(ResourceConsts.URL, url, SearchOperation.EQUAL));
         }
         if (StringUtils.isNotBlank(hosting)) {
-            spec.add(new SearchStatement(ResourceConsts.HOSTING, hosting, SearchOperation.EQUAL));
+            spec.add(new SearchStatement(ResourceConsts.HOSTING, hosting, SearchOperation.MATCH));
+        }
+        if (StringUtils.isNotBlank(thumbnail)) {
+            spec.add(new SearchStatement(ResourceConsts.THUMBNAIL, thumbnail, SearchOperation.EQUAL));
+        }
+        if (StringUtils.isNotBlank(watermark)) {
+            spec.add(new SearchStatement(ResourceConsts.WATERMARK, watermark, SearchOperation.EQUAL));
+        }
+        if (StringUtils.isNotBlank(type)) {
+            spec.add(new SearchStatement(ResourceConsts.TYPE, type, SearchOperation.EQUAL));
+        }
+        if (isBanner != null) {
+            spec.add(new SearchStatement(ResourceConsts.IS_BANNER, isBanner, SearchOperation.EQUAL));
         }
         return repository.findAll(spec);
     }

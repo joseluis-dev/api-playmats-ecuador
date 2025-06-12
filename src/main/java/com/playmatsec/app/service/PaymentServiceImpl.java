@@ -1,5 +1,6 @@
 package com.playmatsec.app.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -10,7 +11,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.controller.model.PaymentDTO;
+import com.playmatsec.app.repository.OrderRepository;
 import com.playmatsec.app.repository.PaymentRepository;
+import com.playmatsec.app.repository.model.Order;
 import com.playmatsec.app.repository.model.Payment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,12 +23,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
+    private final OrderRepository orderRepository;
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<Payment> getPayments(String orderId, String providerPaymentId) {
-        if (StringUtils.hasLength(orderId) || StringUtils.hasLength(providerPaymentId)) {
-            return paymentRepository.search(orderId, providerPaymentId);
+    public List<Payment> getPayments(String order, String amount, String providerPaymentId, String method, String status, String imageUrl, String paidAt, String createdAt) {
+        if (StringUtils.hasLength(order) || StringUtils.hasLength(amount) || StringUtils.hasLength(providerPaymentId) || StringUtils.hasLength(method) || StringUtils.hasLength(status) || StringUtils.hasLength(imageUrl) || StringUtils.hasLength(paidAt) || StringUtils.hasLength(createdAt)) {
+            return paymentRepository.search(order, amount, providerPaymentId, method, status, imageUrl, paidAt, createdAt);
         }
         List<Payment> payments = paymentRepository.getPayments();
         return payments.isEmpty() ? null : payments;
@@ -46,6 +50,12 @@ public class PaymentServiceImpl implements PaymentService {
     public Payment createPayment(PaymentDTO request) {
         if (request != null) {
             Payment payment = objectMapper.convertValue(request, Payment.class);
+            if (payment.getOrder() != null && payment.getOrder().getId() != null) {
+                Order order = orderRepository.getById(payment.getOrder().getId());
+                payment.setOrder(order);
+            }
+            payment.setId(UUID.randomUUID());
+            payment.setCreatedAt(LocalDateTime.now());
             return paymentRepository.save(payment);
         }
         return null;

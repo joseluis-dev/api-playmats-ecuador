@@ -7,6 +7,8 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.playmatsec.app.controller.model.OrderDTO;
+import com.playmatsec.app.repository.utils.Consts.OrderStatus;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -55,8 +57,12 @@ public class Order {
     @OneToOne(mappedBy = "order")
     @JsonManagedReference(value = "order-payment")
     private Payment payment;
-}
 
-enum OrderStatus {
-    PENDING, DELIVERED, CANCELLED
+    public void update(OrderDTO order) {
+        this.status = order.getStatus();
+        this.totalAmount = order.getTotalAmount();
+        this.shippingAddress = order.getShippingAddress();
+        this.billingAddress = order.getBillingAddress();
+        this.updatedAt = LocalDateTime.now();
+    }
 }

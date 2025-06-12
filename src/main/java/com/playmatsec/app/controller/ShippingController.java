@@ -36,10 +36,15 @@ public class ShippingController {
     @RequestParam(required = false) String fullname,
     @RequestParam(required = false) String phone,
     @RequestParam(required = false) String country,
-    @RequestParam(required = false) String state
+    @RequestParam(required = false) String state,
+    @RequestParam(required = false) String city,
+    @RequestParam(required = false) String postalCode,
+    @RequestParam(required = false) String addressOne,
+    @RequestParam(required = false) String addressTwo,
+    @RequestParam(required = false) Boolean current
   ) {
     log.info("headers: {}", headers);
-    List<ShippingAddress> addresses = shippingAddressService.getShippingAddresses(user, fullname, phone, country, state);
+    List<ShippingAddress> addresses = shippingAddressService.getShippingAddresses(user, fullname, phone, country, state, city, postalCode, addressOne, addressTwo, current);
     return addresses != null ? ResponseEntity.ok(addresses) : ResponseEntity.ok(Collections.emptyList());
   }
 

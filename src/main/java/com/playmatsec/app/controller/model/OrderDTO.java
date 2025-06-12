@@ -4,7 +4,12 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
+
+import com.playmatsec.app.repository.model.OrderProduct;
+import com.playmatsec.app.repository.model.Payment;
+import com.playmatsec.app.repository.model.ShippingAddress;
+import com.playmatsec.app.repository.model.User;
+import com.playmatsec.app.repository.utils.Consts.OrderStatus;
 
 @Getter
 @Setter
@@ -13,14 +18,13 @@ import java.util.UUID;
 @Builder
 @ToString
 public class OrderDTO {
-    private UUID id;
-    private UserDTO user;
-    private PaymentDTO payment;
-    private ShippingAddressDTO shippingAddress;
+    private User user;
+    private Payment payment;
+    private ShippingAddress shippingAddress;
     private String billingAddress;
-    private List<OrderProductDTO> orderProducts;
+    private List<OrderProduct> orderProducts;
     private BigDecimal totalAmount;
-    private String status;
+    private OrderStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
