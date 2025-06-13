@@ -172,7 +172,47 @@ public class OrderServiceImpl implements OrderService {
                     Payment payment = paymentRepository.getById(patched.getPayment().getId());
                     patched.setPayment(payment);
                 }
-                patched.setOrderProducts(order.getOrderProducts());
+                if (patched.getOrderProducts() != null) {
+                    List<OrderProduct> updatedOrderProducts = new ArrayList<>();
+                    for (OrderProduct opDTO : patched.getOrderProducts()) {
+                        if (opDTO.getProduct() == null || opDTO.getProduct().getId() == null) {
+                            throw new IllegalArgumentException("Cada orderProduct debe incluir product.id");
+                        }
+                        Product product = productRepository.getById(opDTO.getProduct().getId());
+                        if (product == null) {
+                            throw new IllegalArgumentException("Producto no encontrado: " + opDTO.getProduct().getId());
+                        }
+                        // Buscar si el producto ya existe en la orden original
+                        OrderProduct existing = null;
+                        if (order.getOrderProducts() != null) {
+                            for (OrderProduct op : order.getOrderProducts()) {
+                                if (op.getProduct() != null && op.getProduct().getId().equals(product.getId())) {
+                                    existing = op;
+                                    break;
+                                }
+                            }
+                        }
+                        if (existing != null) {
+                            // Actualizar cantidad y valores
+                            existing.setQuantity(opDTO.getQuantity());
+                            existing.setUnitPrice(product.getPrice());
+                            existing.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(opDTO.getQuantity())));
+                            existing.setUpdatedAt(LocalDateTime.now());
+                            updatedOrderProducts.add(existing);
+                        } else {
+                            // Añadir nuevo OrderProduct
+                            OrderProduct newOp = new OrderProduct();
+                            newOp.setProduct(product);
+                            newOp.setOrder(patched);
+                            newOp.setQuantity(opDTO.getQuantity());
+                            newOp.setUnitPrice(product.getPrice());
+                            newOp.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(opDTO.getQuantity())));
+                            newOp.setCreatedAt(LocalDateTime.now());
+                            updatedOrderProducts.add(newOp);
+                        }
+                    }
+                    patched.setOrderProducts(updatedOrderProducts);
+                }
                 patched.setUpdatedAt(LocalDateTime.now());
                 orderRepository.save(patched);
                 return patched;
