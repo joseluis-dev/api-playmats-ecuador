@@ -37,7 +37,7 @@ public class PaymentRepository {
     public List<Payment> search(String order, String amount, String providerPaymentId, String method, String status, String imageUrl, String paidAt, String createdAt) {
         PaymentSearchCriteria spec = new PaymentSearchCriteria();
         if (StringUtils.isNotBlank(order)) {
-            spec.add(new SearchStatement(PaymentConsts.ORDER, order, SearchOperation.EQUAL));
+            spec.add(new SearchStatement(PaymentConsts.ORDER + ".id", order, SearchOperation.EQUAL));
         }
         if (StringUtils.isNotBlank(amount)) {
             spec.add(new SearchStatement(PaymentConsts.AMOUNT, amount, SearchOperation.EQUAL));

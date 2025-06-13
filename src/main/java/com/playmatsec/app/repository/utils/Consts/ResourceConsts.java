@@ -9,4 +9,5 @@ public class ResourceConsts {
     public static final String HOSTING = "hosting";
     public static final String TYPE = "type";
     public static final String IS_BANNER = "isBanner";
+    public static final String PRODUCT = "product";
 }

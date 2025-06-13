@@ -1,6 +1,7 @@
 package com.playmatsec.app.repository;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
 
@@ -36,7 +37,7 @@ public class ShippingAddressRepository {
     public List<ShippingAddress> search(String user, String fullname, String phone, String country, String state, String city, String postalCode, String addressOne, String addressTwo, Boolean current) {
         ShippingAddressSearchCriteria spec = new ShippingAddressSearchCriteria();
         if (StringUtils.isNotBlank(user)) {
-            spec.add(new SearchStatement(ShippingAddressConsts.USER, user, SearchOperation.EQUAL));
+            spec.add(new SearchStatement(ShippingAddressConsts.USER + ".id", UUID.fromString(user), SearchOperation.EQUAL));
         }
         if (StringUtils.isNotBlank(fullname)) {
             spec.add(new SearchStatement(ShippingAddressConsts.FULLNAME, fullname, SearchOperation.MATCH));
@@ -45,10 +46,10 @@ public class ShippingAddressRepository {
             spec.add(new SearchStatement(ShippingAddressConsts.PHONE, phone, SearchOperation.EQUAL));
         }
         if (StringUtils.isNotBlank(country)) {
-            spec.add(new SearchStatement(ShippingAddressConsts.COUNTRY, country, SearchOperation.EQUAL));
+            spec.add(new SearchStatement(ShippingAddressConsts.COUNTRY + ".id", country, SearchOperation.EQUAL));
         }
         if (StringUtils.isNotBlank(state)) {
-            spec.add(new SearchStatement(ShippingAddressConsts.STATE, state, SearchOperation.EQUAL));
+            spec.add(new SearchStatement(ShippingAddressConsts.STATE + ".id", state, SearchOperation.EQUAL));
         }
         if (StringUtils.isNotBlank(city)) {
             spec.add(new SearchStatement(ShippingAddressConsts.CITY, city, SearchOperation.MATCH));

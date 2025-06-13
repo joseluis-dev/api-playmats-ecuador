@@ -38,7 +38,7 @@ public class OrderRepository {
     public List<Order> search(String user, Date createdAt, Date updatedAt, String status, String totalAmount, String shippingAddress, String billingAddress, String payment) {
         OrderSearchCriteria spec = new OrderSearchCriteria();
         if (StringUtils.isNotBlank(user)) {
-            spec.add(new SearchStatement(OrderConsts.USER, user, SearchOperation.EQUAL));
+            spec.add(new SearchStatement(OrderConsts.USER + ".id", UUID.fromString(user), SearchOperation.EQUAL));
         }
         if (createdAt != null) {
             spec.add(new SearchStatement(OrderConsts.CREATED_AT, createdAt, SearchOperation.EQUAL));
@@ -53,13 +53,13 @@ public class OrderRepository {
             spec.add(new SearchStatement(OrderConsts.TOTAL_AMOUNT, totalAmount, SearchOperation.EQUAL));
         }
         if (StringUtils.isNotBlank(shippingAddress)) {
-            spec.add(new SearchStatement(OrderConsts.SHIPPING_ADDRESS, shippingAddress, SearchOperation.MATCH));
+            spec.add(new SearchStatement(OrderConsts.SHIPPING_ADDRESS + ".id", shippingAddress, SearchOperation.MATCH));
         }
         if (StringUtils.isNotBlank(billingAddress)) {
             spec.add(new SearchStatement(OrderConsts.BILLING_ADDRESS, billingAddress, SearchOperation.MATCH));
         }
         if (StringUtils.isNotBlank(payment)) {
-            spec.add(new SearchStatement(OrderConsts.PAYMENT, payment, SearchOperation.MATCH));
+            spec.add(new SearchStatement(OrderConsts.PAYMENT + ".id", payment, SearchOperation.MATCH));
         }
         return repository.findAll(spec);
     }

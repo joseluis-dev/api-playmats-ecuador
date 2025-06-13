@@ -1,6 +1,9 @@
 package com.playmatsec.app.repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
 import lombok.RequiredArgsConstructor;
@@ -32,16 +35,26 @@ public class OrderProductRepository {
         repository.delete(orderProduct);
     }
 
-    public List<OrderProduct> search(Integer orderId, Integer productId, Integer quantity) {
+    public List<OrderProduct> search(String order, String product, Integer quantity, BigDecimal unitPrice, BigDecimal subtotal, LocalDateTime createdAt) {
         OrderProductSearchCriteria spec = new OrderProductSearchCriteria();
-        if (orderId != null) {
-            spec.add(new SearchStatement(OrderProductConsts.ORDER, orderId, SearchOperation.EQUAL));
+        if (order != null) {
+            // Buscar por el id de la orden (UUID)
+            spec.add(new SearchStatement(OrderProductConsts.ORDER + ".id", UUID.fromString(order), SearchOperation.EQUAL));
         }
-        if (productId != null) {
-            spec.add(new SearchStatement(OrderProductConsts.PRODUCT, productId, SearchOperation.EQUAL));
+        if (product != null) {
+            spec.add(new SearchStatement(OrderProductConsts.PRODUCT, product, SearchOperation.EQUAL));
         }
         if (quantity != null) {
             spec.add(new SearchStatement(OrderProductConsts.QUANTITY, quantity, SearchOperation.EQUAL));
+        }
+        if (unitPrice != null) {
+            spec.add(new SearchStatement(OrderProductConsts.UNIT_PRICE, unitPrice, SearchOperation.EQUAL));
+        }
+        if (subtotal != null) {
+            spec.add(new SearchStatement(OrderProductConsts.SUBTOTAL, subtotal, SearchOperation.EQUAL));
+        }
+        if (createdAt != null) {
+            spec.add(new SearchStatement(OrderProductConsts.CREATED_AT, createdAt, SearchOperation.EQUAL));
         }
         return repository.findAll(spec);
     }

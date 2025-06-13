@@ -39,7 +39,7 @@ public class CartRepository {
     public List<Cart> search(String userId, Integer quantity, BigDecimal price, BigDecimal subtotal, Date createdAt, Date updatedAt) {
         CartSearchCriteria spec = new CartSearchCriteria();
         if (StringUtils.isNotBlank(userId)) {
-            spec.add(new SearchStatement(CartConsts.USER, userId, SearchOperation.EQUAL));
+            spec.add(new SearchStatement(CartConsts.USER + ".id", userId, SearchOperation.EQUAL));
         }
         if (createdAt != null) {
             spec.add(new SearchStatement(CartConsts.CREATED_AT, createdAt, SearchOperation.EQUAL));

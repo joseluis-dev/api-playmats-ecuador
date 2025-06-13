@@ -1,6 +1,7 @@
 package com.playmatsec.app.repository;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,7 @@ public class ResourceRepository {
         repository.delete(resource);
     }
 
-    public List<Resource> search(String name, String url, String hosting, String thumbnail, String watermark, String type, Boolean isBanner) {
+    public List<Resource> search(String name, String url, String hosting, String thumbnail, String watermark, String type, Boolean isBanner, String product) {
         ResourceSearchCriteria spec = new ResourceSearchCriteria();
         if (StringUtils.isNotBlank(name)) {
             spec.add(new SearchStatement(ResourceConsts.NAME, name, SearchOperation.MATCH));
@@ -55,6 +56,9 @@ public class ResourceRepository {
         }
         if (isBanner != null) {
             spec.add(new SearchStatement(ResourceConsts.IS_BANNER, isBanner, SearchOperation.EQUAL));
+        }
+        if (StringUtils.isNotBlank(product)) {
+            spec.add(new SearchStatement(ResourceConsts.PRODUCT + ".id", UUID.fromString(product), SearchOperation.EQUAL));
         }
         return repository.findAll(spec);
     }

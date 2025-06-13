@@ -38,10 +38,11 @@ public class ResourcesController {
     @RequestParam(required = false) String watermark,
     @RequestParam(required = false) String hosting,
     @RequestParam(required = false) String type,
-    @RequestParam(required = false) Boolean isBanner
+    @RequestParam(required = false) Boolean isBanner,
+    @RequestParam(required = false) String product
   ) {
     log.info("headers: {}", headers);
-    List<Resource> resources = resourceService.getResources(name, url, hosting, thumbnail, watermark, type, isBanner);
+    List<Resource> resources = resourceService.getResources(name, url, hosting, thumbnail, watermark, type, isBanner, product);
     return resources != null ? ResponseEntity.ok(resources) : ResponseEntity.ok(Collections.emptyList());
   }
 

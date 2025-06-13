@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.playmatsec.app.controller.model.UserDTO;
 
@@ -40,7 +41,8 @@ public class User {
     private Status status;
 
     @OneToMany(mappedBy = "user")
-    @JsonManagedReference(value = "user-orders")
+    // @JsonManagedReference(value = "user-orders")
+    @JsonIgnore
     private List<Order> orders;
 
     @OneToOne(mappedBy = "user")

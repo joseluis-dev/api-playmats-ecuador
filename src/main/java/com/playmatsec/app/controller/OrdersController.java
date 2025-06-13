@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.playmatsec.app.controller.model.OrderDTO;
 import com.playmatsec.app.repository.model.Order;
+import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.service.OrderService;
 
 import lombok.RequiredArgsConstructor;
@@ -51,6 +52,13 @@ public class OrdersController {
     log.info("headers: {}", headers);
     Order order = orderService.getOrderById(id);
     return order != null ? ResponseEntity.ok(order) : ResponseEntity.notFound().build();
+  }
+
+  @GetMapping("/orders/{id}/products")
+  public ResponseEntity<List<Product>> getOrderProductsByOrderId(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+    log.info("headers: {}", headers);
+    List<Product> products = orderService.getProductsByOrderId(id);
+    return products != null ? ResponseEntity.ok(products) : ResponseEntity.notFound().build();
   }
 
   @DeleteMapping("/orders/{id}")

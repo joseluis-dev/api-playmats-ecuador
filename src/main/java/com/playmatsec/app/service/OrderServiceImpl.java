@@ -1,7 +1,9 @@
 package com.playmatsec.app.service;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -12,12 +14,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.controller.model.OrderDTO;
+import com.playmatsec.app.repository.OrderProductRepository;
 import com.playmatsec.app.repository.OrderRepository;
 import com.playmatsec.app.repository.PaymentRepository;
+import com.playmatsec.app.repository.ProductRepository;
 import com.playmatsec.app.repository.ShippingAddressRepository;
 import com.playmatsec.app.repository.UserRepository;
 import com.playmatsec.app.repository.model.Order;
+import com.playmatsec.app.repository.model.OrderProduct;
 import com.playmatsec.app.repository.model.Payment;
+import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.model.ShippingAddress;
 import com.playmatsec.app.repository.model.User;
 
@@ -32,6 +38,8 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRespository;
     private final ShippingAddressRepository shippingAddressRepository;
     private final PaymentRepository paymentRepository;
+    private final ProductRepository productRepository;
+    private final OrderProductRepository orderProductRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -71,6 +79,26 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public List<OrderProduct> getOrderProductsByOrderId(String orderId) {
+        if (orderId != null) {
+            return orderProductRepository.search(orderId, null, null, null, null, null);
+        }
+        return List.of();
+    }
+
+    @Override
+    public List<Product> getProductsByOrderId(String orderId) {
+        List<OrderProduct> orderProducts = getOrderProductsByOrderId(orderId);
+        List<Product> products = new ArrayList<>();
+        for (OrderProduct op : orderProducts) {
+            if (op.getProduct() != null) {
+                products.add(op.getProduct());
+            }
+        }
+        return products;
+    }
+
+    @Override
     public Order createOrder(OrderDTO request) {
         if (request != null && request.getUser() != null) {
             Order order = objectMapper.convertValue(request, Order.class);
@@ -83,6 +111,32 @@ public class OrderServiceImpl implements OrderService {
                 order.setShippingAddress(shippingAddress);
             }
             order.setId(UUID.randomUUID());
+            // Manejar correctamente los OrderProducts
+            if (request.getOrderProducts() != null) {
+                for (int i = 0; i < request.getOrderProducts().size(); i++) {
+                    OrderProduct opDTO = request.getOrderProducts().get(i);
+                    if (opDTO.getProduct() == null || opDTO.getProduct().getId() == null) {
+                        throw new IllegalArgumentException("Cada orderProduct debe incluir product.id");
+                    }
+                    Product product = productRepository.getById(opDTO.getProduct().getId());
+                    if (product == null) {
+                        throw new IllegalArgumentException("Producto no encontrado: " + opDTO.getProduct().getId());
+                    }
+                    OrderProduct op = new OrderProduct();
+                    op.setProduct(product);
+                    op.setOrder(order);
+                    op.setQuantity(opDTO.getQuantity());
+                    op.setUnitPrice(product.getPrice());
+                    op.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(opDTO.getQuantity())));
+                    op.setCreatedAt(LocalDateTime.now());
+                    if (order.getOrderProducts() == null || order.getOrderProducts().size() <= i) {
+                        if (order.getOrderProducts() == null) order.setOrderProducts(new ArrayList<>());
+                        order.getOrderProducts().add(op);
+                    } else {
+                        order.getOrderProducts().set(i, op);
+                    }
+                }
+            }
             order.setCreatedAt(LocalDateTime.now());
             return orderRepository.save(order);
         }
@@ -92,8 +146,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order updateOrder(String id, String request) {
         Order order = getOrderById(id);
-        User orderUser = order != null ? order.getUser() : null;
-        log.info("order: {}", orderUser);
         if (order != null) {
             try {
                 JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
@@ -120,6 +172,7 @@ public class OrderServiceImpl implements OrderService {
                     Payment payment = paymentRepository.getById(patched.getPayment().getId());
                     patched.setPayment(payment);
                 }
+                patched.setOrderProducts(order.getOrderProducts());
                 patched.setUpdatedAt(LocalDateTime.now());
                 orderRepository.save(patched);
                 return patched;

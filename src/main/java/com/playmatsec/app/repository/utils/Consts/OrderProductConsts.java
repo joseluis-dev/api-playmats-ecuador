@@ -6,4 +6,6 @@ public class OrderProductConsts {
     public static final String PRODUCT = "product";
     public static final String QUANTITY = "quantity";
     public static final String UNIT_PRICE = "unitPrice";
+    public static final String SUBTOTAL = "subtotal";
+    public static final String CREATED_AT = "createdAt";
 }

@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.playmatsec.app.controller.model.OrderProductDTO;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -26,18 +28,24 @@ public class OrderProduct {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "order_id")
-    @JsonBackReference(value = "order-orderProducts")
+    @JsonBackReference("order-orderProducts")
     private Order order;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id")
-    @JsonBackReference(value = "product-orderProducts")
+    @JsonBackReference("product-orderProducts")
     private Product product;
 
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal subtotal;
     private LocalDateTime createdAt;
+
+    public void update(OrderProductDTO orderProduct) {
+        this.quantity = orderProduct.getQuantity();
+        this.unitPrice = orderProduct.getUnitPrice();
+        this.subtotal = orderProduct.getSubtotal();
+    }
 }

@@ -2,7 +2,9 @@ package com.playmatsec.app.controller.model;
 
 import lombok.*;
 import java.math.BigDecimal;
-import java.util.UUID;
+
+import com.playmatsec.app.repository.model.Order;
+import com.playmatsec.app.repository.model.Product;
 
 @Getter
 @Setter
@@ -11,9 +13,10 @@ import java.util.UUID;
 @Builder
 @ToString
 public class OrderProductDTO {
-    private UUID id;
-    private ProductDTO product;
+    private Order order;
+    private Product product;
     private Integer quantity;
-    private BigDecimal price;
+    private BigDecimal unitPrice;
     private BigDecimal subtotal;
+    private String createdAt;
 }

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import com.playmatsec.app.repository.model.State;
 import com.playmatsec.app.repository.utils.SearchOperation;
 import com.playmatsec.app.repository.utils.SearchStatement;
+import com.playmatsec.app.repository.utils.Consts.StateConsts;
 import com.playmatsec.app.repository.utils.SearchCriteria.StateSearchCriteria;
 import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -35,10 +36,10 @@ public class StateRepository {
     public List<State> search(String nombre, Integer countryId) {
         StateSearchCriteria spec = new StateSearchCriteria();
         if (StringUtils.isNotBlank(nombre)) {
-            spec.add(new SearchStatement("nombre", nombre, SearchOperation.MATCH));
+            spec.add(new SearchStatement(StateConsts.NOMBRE, nombre, SearchOperation.MATCH));
         }
         if (countryId != null) {
-            spec.add(new SearchStatement("country.id", countryId, SearchOperation.EQUAL));
+            spec.add(new SearchStatement(StateConsts.COUNTRY + ".id", countryId, SearchOperation.EQUAL));
         }
         return repository.findAll(spec);
     }

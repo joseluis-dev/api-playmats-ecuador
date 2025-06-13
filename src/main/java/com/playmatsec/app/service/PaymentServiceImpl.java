@@ -69,6 +69,12 @@ public class PaymentServiceImpl implements PaymentService {
                 JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
                 JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(payment)));
                 Payment patched = objectMapper.treeToValue(target, Payment.class);
+                if (patched.getOrder() == null || patched.getOrder().getId() == null) {
+                    patched.setOrder(payment.getOrder());
+                } else {
+                    Order order = orderRepository.getById(patched.getOrder().getId());
+                    patched.setOrder(order);
+                }
                 paymentRepository.save(patched);
                 return patched;
             } catch (JsonProcessingException | JsonPatchException e) {
@@ -83,7 +89,13 @@ public class PaymentServiceImpl implements PaymentService {
     public Payment updatePayment(String id, PaymentDTO request) {
         Payment payment = getPaymentById(id);
         if (payment != null) {
-            // payment.update(request); // Implementar si existe método update
+            payment.update(request);
+            if (request.getOrder() != null && request.getOrder().getId() != null) {
+                Order order = orderRepository.getById(request.getOrder().getId());
+                payment.setOrder(order);
+            } else {
+                payment.setOrder(payment.getOrder());
+            }
             paymentRepository.save(payment);
             return payment;
         }
