@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.playmatsec.app.controller.model.OrderProductDTO;
 
 import jakarta.persistence.Entity;
@@ -20,6 +21,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "order_products")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -42,10 +44,12 @@ public class OrderProduct {
     private BigDecimal unitPrice;
     private BigDecimal subtotal;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public void update(OrderProductDTO orderProduct) {
         this.quantity = orderProduct.getQuantity();
         this.unitPrice = orderProduct.getUnitPrice();
         this.subtotal = orderProduct.getSubtotal();
+        this.updatedAt = LocalDateTime.now();
     }
 }

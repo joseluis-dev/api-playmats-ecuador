@@ -1,6 +1,7 @@
 package com.playmatsec.app.repository.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.playmatsec.app.controller.model.ResourceDTO;
 import com.playmatsec.app.repository.utils.Consts.ResourceType;
 
@@ -19,6 +20,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "resources")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

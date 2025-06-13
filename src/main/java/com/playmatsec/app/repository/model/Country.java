@@ -2,6 +2,7 @@ package com.playmatsec.app.repository.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.playmatsec.app.controller.model.CountryDTO;
 
@@ -18,6 +19,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "countries")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

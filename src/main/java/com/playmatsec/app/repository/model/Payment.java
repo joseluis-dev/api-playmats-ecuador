@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.playmatsec.app.controller.model.PaymentDTO;
 import com.playmatsec.app.repository.utils.Consts.PaymentMethod;
 import com.playmatsec.app.repository.utils.Consts.PaymentStatus;
@@ -23,6 +24,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "payments")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

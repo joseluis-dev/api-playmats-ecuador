@@ -19,4 +19,5 @@ public class OrderProductDTO {
     private BigDecimal unitPrice;
     private BigDecimal subtotal;
     private String createdAt;
+    private String updatedAt;
 }

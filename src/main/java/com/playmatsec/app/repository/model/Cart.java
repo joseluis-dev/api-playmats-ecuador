@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.playmatsec.app.controller.model.CartDTO;
 
 import jakarta.persistence.CascadeType;
@@ -23,6 +24,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "cart")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
