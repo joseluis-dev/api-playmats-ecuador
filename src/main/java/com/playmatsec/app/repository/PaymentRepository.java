@@ -58,7 +58,7 @@ public class PaymentRepository {
             spec.add(new SearchStatement(PaymentConsts.PAID_AT, paidAt, SearchOperation.MATCH));
         }
         if (StringUtils.isNotBlank(createdAt)) {
-            spec.add(new SearchStatement(PaymentConsts.CREATED_AT, createdAt, SearchOperation.MATCH));
+            spec.add(new SearchStatement(PaymentConsts.CREATED_AT, createdAt, SearchOperation.EQUAL));
         }
         return repository.findAll(spec);
     }

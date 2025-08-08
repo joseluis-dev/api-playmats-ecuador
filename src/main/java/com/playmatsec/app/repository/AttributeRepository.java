@@ -35,15 +35,15 @@ public class AttributeRepository {
     repository.delete(attribute);
   }
 
-  public List<Attribute> search(String name, String description, String color, LocalDateTime createdAt, LocalDateTime updatedAt) {
+  public List<Attribute> search(String name, String value, String color, LocalDateTime createdAt, LocalDateTime updatedAt) {
     AttributeSearchCriteria<Attribute> spec = new AttributeSearchCriteria<>();
 
     if (StringUtils.isNotBlank(name)) {
       spec.add(new SearchStatement(AttributeConsts.NAME, name, SearchOperation.MATCH));
     }
 
-    if (StringUtils.isNotBlank(description)) {
-      spec.add(new SearchStatement(AttributeConsts.DESCRIPTION, description, SearchOperation.MATCH));
+    if (StringUtils.isNotBlank(value)) {
+      spec.add(new SearchStatement(AttributeConsts.VALUE, value, SearchOperation.MATCH));
     }
 
     if (StringUtils.isNotBlank(color)) {

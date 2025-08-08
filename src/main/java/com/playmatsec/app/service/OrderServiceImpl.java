@@ -166,11 +166,21 @@ public class OrderServiceImpl implements OrderService {
                     patched.setShippingAddress(shippingAddress);
                 }
                 // Si el patch no incluye payment, conservar el original
-                if (patched.getPayment() == null) {
-                    patched.setPayment(order.getPayment());
-                } else if (patched.getPayment().getId() != null) {
-                    Payment payment = paymentRepository.getById(patched.getPayment().getId());
-                    patched.setPayment(payment);
+                if (patched.getPayments() == null) {
+                    patched.setPayments(order.getPayments());
+                } else if (patched.getPayments() != null) {
+                    List<Payment> updatedPayments = new ArrayList<>();
+                    for (Payment pDTO : patched.getPayments()) {
+                        if (pDTO.getId() == null) {
+                            throw new IllegalArgumentException("Cada payment debe incluir id");
+                        }
+                        Payment payment = paymentRepository.getById(pDTO.getId());
+                        if (payment == null) {
+                            throw new IllegalArgumentException("Payment no encontrado: " + pDTO.getId());
+                        }
+                        updatedPayments.add(payment);
+                    }
+                    patched.setPayments(updatedPayments);
                 }
                 if (patched.getOrderProducts() != null) {
                     List<OrderProduct> updatedOrderProducts = new ArrayList<>();
@@ -236,9 +246,19 @@ public class OrderServiceImpl implements OrderService {
                 ShippingAddress shippingAddress = shippingAddressRepository.getById(request.getShippingAddress().getId());
                 order.setShippingAddress(shippingAddress);
             }
-            if (request.getPayment() != null && request.getPayment().getId() != null) {
-                Payment payment = paymentRepository.getById(request.getPayment().getId());
-                order.setPayment(payment);
+            if (request.getPayments() != null && !request.getPayments().isEmpty()) {
+                List<Payment> updatedPayments = new ArrayList<>();
+                for (Payment pDTO : request.getPayments()) {
+                    if (pDTO.getId() == null) {
+                        throw new IllegalArgumentException("Cada payment debe incluir id");
+                    }
+                    Payment payment = paymentRepository.getById(pDTO.getId());
+                    if (payment == null) {
+                        throw new IllegalArgumentException("Payment no encontrado: " + pDTO.getId());
+                    }
+                    updatedPayments.add(payment);
+                }
+                order.setPayments(updatedPayments);
             }
             order.update(request);
             orderRepository.save(order);

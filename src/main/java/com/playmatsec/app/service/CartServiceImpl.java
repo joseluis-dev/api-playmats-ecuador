@@ -113,6 +113,7 @@ public class CartServiceImpl implements CartService {
                     patched.setUser(cart.getUser());
                 }
                 if (patched.getProducts() != null && !patched.getProducts().isEmpty()) {
+                    patched.getProducts().removeIf(p -> productRepository.getById(p.getId()) == null);
                     List<Product> products = patched.getProducts().stream()
                         .map(p -> productRepository.getById(p.getId()))
                         .collect(Collectors.toList());

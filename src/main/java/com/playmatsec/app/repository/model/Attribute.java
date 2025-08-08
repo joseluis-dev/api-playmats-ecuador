@@ -26,14 +26,14 @@ public class Attribute {
     private Integer id;
 
     private String name;
-    private String description;
+    private String value;
     private String color;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public void update(AttributeDTO updateRequest) {
         this.name = updateRequest.getName();
-        this.description = updateRequest.getDescription();
+        this.value = updateRequest.getValue();
         this.color = updateRequest.getColor();
         this.createdAt = updateRequest.getCreatedAt();
         this.updatedAt = updateRequest.getUpdatedAt();

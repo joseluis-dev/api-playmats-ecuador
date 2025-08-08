@@ -17,7 +17,7 @@ import lombok.ToString;
 @ToString
 public class AttributeDTO {
   private String name;
-  private String description;
+  private String value;
   private String color;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;

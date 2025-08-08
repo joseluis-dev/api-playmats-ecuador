@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,11 +35,11 @@ public class ShippingAddress {
     private String fullname;
     private String phone;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "country_id")
     private Country country;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "state_id")
     private State state;
 

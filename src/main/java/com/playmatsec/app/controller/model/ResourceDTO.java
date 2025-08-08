@@ -1,5 +1,7 @@
 package com.playmatsec.app.controller.model;
 
+import java.util.List;
+
 import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.utils.Consts.ResourceType;
 
@@ -17,7 +19,7 @@ public class ResourceDTO {
     private String thumbnail;
     private String watermark;
     private String hosting;
-    private Product product;
+    private List<Product> products;
     private ResourceType type;
     private Boolean isBanner;
 }

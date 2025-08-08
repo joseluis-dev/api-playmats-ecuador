@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.playmatsec.app.controller.model.ProductDTO;
 
 import jakarta.persistence.Entity;
@@ -38,8 +37,8 @@ public class Product {
     private LocalDateTime updatedAt;
     private Boolean isCustomizable;
 
-    @OneToMany(mappedBy = "product")
-    @JsonManagedReference(value = "product-resources")
+    @ManyToMany(mappedBy = "products")
+    @JsonIgnore
     private List<Resource> resources;
     @ManyToMany
     @JoinTable(
@@ -50,7 +49,7 @@ public class Product {
     private List<Category> categories;
     @ManyToMany
     @JoinTable(
-        name = "product_atributes",
+        name = "product_attributes",
         joinColumns = {@JoinColumn(name = "product_id")},
         inverseJoinColumns = {@JoinColumn(name = "attribute_id")}
     )

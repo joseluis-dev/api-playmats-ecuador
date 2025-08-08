@@ -1,5 +1,6 @@
 package com.playmatsec.app.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -61,11 +62,21 @@ public class ResourceServiceImpl implements ResourceService {
                 JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
                 JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(resource)));
                 Resource patched = objectMapper.treeToValue(target, Resource.class);
-                if (patched.getProduct() == null) {
-                    patched.setProduct(resource.getProduct());
-                } else if (patched.getProduct().getId() != null) {
-                    Product product = productRepository.getById(patched.getProduct().getId());
-                    patched.setProduct(product);
+                if (patched.getProducts() == null) {
+                    patched.setProducts(resource.getProducts());
+                } else {
+                    List<Product> updatedProducts = new ArrayList<>();
+                    for (Product pDTO : patched.getProducts()) {
+                        if (pDTO.getId() == null) {
+                            throw new IllegalArgumentException("Cada product debe incluir id");
+                        }
+                        Product product = productRepository.getById(pDTO.getId());
+                        if (product == null) {
+                            throw new IllegalArgumentException("Product no encontrado: " + pDTO.getId());
+                        }
+                        updatedProducts.add(product);
+                    }
+                    patched.setProducts(updatedProducts);
                 }
                 resourceRepository.save(patched);
                 return patched;

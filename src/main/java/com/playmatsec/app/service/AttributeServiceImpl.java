@@ -28,13 +28,13 @@ public class AttributeServiceImpl implements AttributeService {
   @Override
   public List<Attribute> getAttributes(
       String name,
-      String description,
+      String value,
       String color,
       String createdAt,
       String updatedAt
   ) {
     if (StringUtils.hasLength(name)
-        || StringUtils.hasLength(description)
+        || StringUtils.hasLength(value)
         || StringUtils.hasLength(color)
         || createdAt != null
         || updatedAt != null) {
@@ -55,7 +55,7 @@ public class AttributeServiceImpl implements AttributeService {
           log.warn("updatedAt no es una fecha válida: {}", updatedAt);
         }
       }
-      return attributeRepository.search(name, description, color, createdAtParsed, updatedAtParsed);
+      return attributeRepository.search(name, value, color, createdAtParsed, updatedAtParsed);
     }
     List<Attribute> attributes = attributeRepository.getAttributes();
     return attributes.isEmpty() ? null : attributes;
@@ -76,7 +76,7 @@ public class AttributeServiceImpl implements AttributeService {
   public Attribute createAttribute(AttributeDTO request) {
     if (request != null
         && StringUtils.hasLength(request.getName().trim())
-        && StringUtils.hasLength(request.getDescription().trim())
+        && StringUtils.hasLength(request.getValue().trim())
         && StringUtils.hasLength(request.getColor().trim())) {
       Attribute attribute = objectMapper.convertValue(request, Attribute.class);
       attribute.setCreatedAt(LocalDateTime.now());

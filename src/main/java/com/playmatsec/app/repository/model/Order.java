@@ -19,7 +19,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -61,9 +60,9 @@ public class Order {
     @JsonManagedReference(value = "order-orderProducts")
     private List<OrderProduct> orderProducts;
 
-    @OneToOne(mappedBy = "order")
+    @OneToMany(mappedBy = "order")
     @JsonManagedReference(value = "order-payment")
-    private Payment payment;
+    private List<Payment> payments;
 
     public void update(OrderDTO order) {
         this.status = order.getStatus();

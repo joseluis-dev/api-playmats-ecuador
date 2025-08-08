@@ -33,7 +33,7 @@ public class AttributesController {
   public ResponseEntity<List<Attribute>> getAttributes(
     @RequestHeader Map<String, String> headers,
     @RequestParam(required = false) String name,
-    @RequestParam(required = false) String description,
+    @RequestParam(required = false) String value,
     @RequestParam(required = false) String color,
     @RequestParam(required = false) String createdAt,
     @RequestParam(required = false) String updatedAt
@@ -41,7 +41,7 @@ public class AttributesController {
     log.info("headers: {}", headers);
     List<Attribute> attributes = attributeService.getAttributes(
       name,
-      description,
+      value,
       color,
       createdAt,
       updatedAt

@@ -1,6 +1,7 @@
 package com.playmatsec.app.repository.model;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.playmatsec.app.controller.model.ResourceDTO;
 import com.playmatsec.app.repository.utils.Consts.ResourceType;
@@ -12,7 +13,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -35,15 +37,33 @@ public class Resource {
     private String watermark;
     private String hosting;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    @JsonBackReference(value = "product-resources")
-    private Product product;
+    @ManyToMany
+    @JoinTable(
+        name = "resource_product",
+        joinColumns = @JoinColumn(name = "resource_id"),
+        inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    private List<Product> products;
 
     @Enumerated(EnumType.STRING)
     private ResourceType type;
 
     private Boolean isBanner;
+
+    @ManyToMany
+    @JoinTable(
+        name = "resource_categories",
+        joinColumns = {@JoinColumn(name = "resource_id")},
+        inverseJoinColumns = {@JoinColumn(name = "category_id")}
+    )
+    private List<Category> categories;
+    @ManyToMany
+    @JoinTable(
+        name = "resource_attributes",
+        joinColumns = {@JoinColumn(name = "resource_id")},
+        inverseJoinColumns = {@JoinColumn(name = "attribute_id")}
+    )
+    private List<Attribute> attributes;
 
     public void update(ResourceDTO resource) {
         this.name = resource.getName();

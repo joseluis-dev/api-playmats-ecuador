@@ -19,7 +19,7 @@ import com.playmatsec.app.repository.utils.Consts.OrderStatus;
 @ToString
 public class OrderDTO {
     private User user;
-    private Payment payment;
+    private List<Payment> payments;
     private ShippingAddress shippingAddress;
     private String billingAddress;
     private List<OrderProduct> orderProducts;
