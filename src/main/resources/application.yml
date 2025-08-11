@@ -3,7 +3,8 @@ spring:
     name: app
   datasource:
     url: jdbc:postgresql://localhost:5432/playmats-ec
-    username: postgres
+    # username: postgres
+    username: admin
     password: kami123
     driver-class-name: org.postgresql.Driver
   jpa:
