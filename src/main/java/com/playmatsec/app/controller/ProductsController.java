@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.playmatsec.app.controller.model.ProductDTO;
+import com.playmatsec.app.controller.model.CategoryIdsDTO;
+import com.playmatsec.app.controller.model.AttributeIdsDTO;
+import com.playmatsec.app.repository.model.Attribute;
+import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.service.ProductService;
 
@@ -75,5 +79,49 @@ public class ProductsController {
     log.info("headers: {}", headers);
     Product replacedProduct = productService.updateProduct(id, product);
     return replacedProduct != null ? ResponseEntity.ok(replacedProduct) : ResponseEntity.notFound().build();
+  }
+
+  // Categories endpoints
+  @GetMapping("/products/{id}/categories")
+  public ResponseEntity<List<Category>> getProductCategories(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+    log.info("headers: {}", headers);
+    List<Category> categories = productService.getProductCategories(id);
+    return categories != null ? ResponseEntity.ok(categories) : ResponseEntity.notFound().build();
+  }
+
+  @PostMapping("/products/{id}/categories")
+  public ResponseEntity<Product> addProductCategories(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody CategoryIdsDTO request) {
+    log.info("headers: {}", headers);
+    Product updatedProduct = productService.addCategoriesToProduct(id, request.getCategoryIds());
+    return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
+  }
+
+  @PutMapping("/products/{id}/categories")
+  public ResponseEntity<Product> replaceProductCategories(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody CategoryIdsDTO request) {
+    log.info("headers: {}", headers);
+    Product updatedProduct = productService.replaceProductCategories(id, request.getCategoryIds());
+    return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
+  }
+
+  // Attributes endpoints
+  @GetMapping("/products/{id}/attributes")
+  public ResponseEntity<List<Attribute>> getProductAttributes(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+    log.info("headers: {}", headers);
+    List<Attribute> attributes = productService.getProductAttributes(id);
+    return attributes != null ? ResponseEntity.ok(attributes) : ResponseEntity.notFound().build();
+  }
+
+  @PostMapping("/products/{id}/attributes")
+  public ResponseEntity<Product> addProductAttributes(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody AttributeIdsDTO request) {
+    log.info("headers: {}", headers);
+    Product updatedProduct = productService.addAttributesToProduct(id, request.getAttributeIds());
+    return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
+  }
+
+  @PutMapping("/products/{id}/attributes")
+  public ResponseEntity<Product> replaceProductAttributes(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody AttributeIdsDTO request) {
+    log.info("headers: {}", headers);
+    Product updatedProduct = productService.replaceProductAttributes(id, request.getAttributeIds());
+    return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
 }
