@@ -2,6 +2,7 @@ package com.playmatsec.app.repository.model;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.playmatsec.app.controller.model.ResourceDTO;
 import com.playmatsec.app.repository.utils.Consts.ResourceType;
@@ -40,6 +41,7 @@ public class Resource {
     private String hosting;
 
     @ManyToMany
+    @JsonIgnore
     @JoinTable(
         name = "resource_product",
         joinColumns = @JoinColumn(name = "resource_id"),
@@ -68,6 +70,7 @@ public class Resource {
     private List<Attribute> attributes;
 
     public void update(ResourceDTO resource) {
+        this.publicId = resource.getPublicId();
         this.name = resource.getName();
         this.url = resource.getUrl();
         this.thumbnail = resource.getThumbnail();

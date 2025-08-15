@@ -239,7 +239,7 @@ public class ProductServiceImpl implements ProductService {
         try {
             Product product = getProductById(productId);
             if (product != null && file != null && !file.isEmpty()) {
-                String folder = "products/" + productId;
+                String folder = "products/";
                 Map<String, String> uploadResult = cloudinaryService.uploadImage(file, folder);
                 
                 if (uploadResult != null) {

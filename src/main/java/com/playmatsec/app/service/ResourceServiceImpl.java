@@ -138,6 +138,7 @@ public class ResourceServiceImpl implements ResourceService {
             Integer resourceId = Integer.parseInt(id);
             Resource resource = resourceRepository.getById(resourceId);
             if (resource != null) {
+                cloudinaryService.deleteImage(resource.getPublicId());
                 resourceRepository.delete(resource);
                 return true;
             }

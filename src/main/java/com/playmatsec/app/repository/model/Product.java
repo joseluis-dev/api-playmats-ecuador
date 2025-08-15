@@ -38,7 +38,7 @@ public class Product {
     private Boolean isCustomizable;
 
     @ManyToMany(mappedBy = "products")
-    @JsonIgnore
+    // @JsonIgnore
     private List<Resource> resources;
     @ManyToMany
     @JoinTable(
