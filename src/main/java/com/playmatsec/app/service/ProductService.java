@@ -1,10 +1,13 @@
 package com.playmatsec.app.service;
 
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Attribute;
+import com.playmatsec.app.repository.model.Resource;
 import com.playmatsec.app.controller.model.ProductDTO;
+import com.playmatsec.app.controller.model.ResourceUploadDTO;
 
 public interface ProductService {
     List<Product> getProducts(String name, String description, Double price, Boolean isCustomizable);
@@ -23,4 +26,10 @@ public interface ProductService {
     List<Attribute> getProductAttributes(String productId);
     Product addAttributesToProduct(String productId, List<String> attributeIds);
     Product replaceProductAttributes(String productId, List<String> attributeIds);
+
+    // Resource management methods
+    List<Resource> getProductResources(String productId);
+    Product addResourceToProduct(String productId, MultipartFile file, ResourceUploadDTO uploadDTO);
+    Product addResourcesToProduct(String productId, List<String> resourceIds);
+    Product replaceProductResources(String productId, List<String> resourceIds);
 }

@@ -30,6 +30,8 @@ public class Resource {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    
+    private String publicId;
 
     private String name;
     private String url;

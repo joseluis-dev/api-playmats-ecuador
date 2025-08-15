@@ -15,6 +15,7 @@ import lombok.*;
 @ToString
 public class ResourceDTO {
     private String name;
+    private String publicId;
     private String url;
     private String thumbnail;
     private String watermark;

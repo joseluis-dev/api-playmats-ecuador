@@ -14,14 +14,19 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.playmatsec.app.controller.model.ProductDTO;
 import com.playmatsec.app.controller.model.CategoryIdsDTO;
 import com.playmatsec.app.controller.model.AttributeIdsDTO;
+import com.playmatsec.app.controller.model.ResourceUploadDTO;
+import com.playmatsec.app.controller.model.ResourceIdsDTO;
 import com.playmatsec.app.repository.model.Attribute;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Product;
+import com.playmatsec.app.repository.model.Resource;
+import com.playmatsec.app.repository.utils.Consts.ResourceType;
 import com.playmatsec.app.service.ProductService;
 
 import lombok.RequiredArgsConstructor;
@@ -122,6 +127,44 @@ public class ProductsController {
   public ResponseEntity<Product> replaceProductAttributes(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody AttributeIdsDTO request) {
     log.info("headers: {}", headers);
     Product updatedProduct = productService.replaceProductAttributes(id, request.getAttributeIds());
+    return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
+  }
+
+  // Resources endpoints
+  @GetMapping("/products/{id}/resources")
+  public ResponseEntity<List<Resource>> getProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+    log.info("headers: {}", headers);
+    List<Resource> resources = productService.getProductResources(id);
+    return resources != null ? ResponseEntity.ok(resources) : ResponseEntity.notFound().build();
+  }
+
+  @PostMapping("/products/{id}/resources")
+  public ResponseEntity<Product> addProductResource(
+    @RequestHeader Map<String, String> headers,
+    @PathVariable String id,
+    @RequestParam("file") MultipartFile file,
+    @RequestParam("type") ResourceType type,
+    @RequestParam("isBanner") Boolean isBanner
+  ) {
+    log.info("headers: {}", headers);
+    ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
+    uploadDTO.setType(type);
+    uploadDTO.setIsBanner(isBanner);
+    Product updatedProduct = productService.addResourceToProduct(id, file, uploadDTO);
+    return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
+  }
+
+  @PostMapping("/products/{id}/resources/bulk")
+  public ResponseEntity<Product> addProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ResourceIdsDTO request) {
+    log.info("headers: {}", headers);
+    Product updatedProduct = productService.addResourcesToProduct(id, request.getResourceIds());
+    return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
+  }
+
+  @PutMapping("/products/{id}/resources")
+  public ResponseEntity<Product> replaceProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ResourceIdsDTO request) {
+    log.info("headers: {}", headers);
+    Product updatedProduct = productService.replaceProductResources(id, request.getResourceIds());
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
 }

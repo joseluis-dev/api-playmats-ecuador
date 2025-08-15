@@ -2,20 +2,26 @@ package com.playmatsec.app.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.controller.model.ProductDTO;
+import com.playmatsec.app.controller.model.ResourceUploadDTO;
 import com.playmatsec.app.repository.ProductRepository;
 import com.playmatsec.app.repository.CategoryRepository;
 import com.playmatsec.app.repository.AttributeRepository;
+import com.playmatsec.app.repository.ResourceRepository;
 import com.playmatsec.app.repository.model.Product;
+import com.playmatsec.app.repository.model.Resource;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Attribute;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +34,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final AttributeRepository attributeRepository;
+    private final ResourceRepository resourceRepository;
+    private final CloudinaryService cloudinaryService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -213,6 +221,97 @@ public class ProductServiceImpl implements ProductService {
             }
         } catch (IllegalArgumentException e) {
             log.error("Invalid attribute ID format in the list", e);
+        }
+        return null;
+    }
+
+    @Override
+    public List<com.playmatsec.app.repository.model.Resource> getProductResources(String productId) {
+        Product product = getProductById(productId);
+        if (product != null) {
+            return product.getResources();
+        }
+        return null;
+    }
+
+    @Override
+    public Product addResourceToProduct(String productId, MultipartFile file, ResourceUploadDTO uploadDTO) {
+        try {
+            Product product = getProductById(productId);
+            if (product != null && file != null && !file.isEmpty()) {
+                String folder = "products/" + productId;
+                Map<String, String> uploadResult = cloudinaryService.uploadImage(file, folder);
+                
+                if (uploadResult != null) {
+                    Resource resource = new Resource();
+                    resource.setName(file.getOriginalFilename());
+                    resource.setUrl(uploadResult.get("url"));
+                    resource.setThumbnail(uploadResult.get("thumbnail"));
+                    resource.setWatermark(uploadResult.get("watermark"));
+                    resource.setHosting("cloudinary");
+                    resource.setType(uploadDTO.getType());
+                    resource.setIsBanner(uploadDTO.getIsBanner());
+                    resource.setPublicId(uploadResult.get("publicId"));
+                    
+                    List<Product> products = new ArrayList<>();
+                    products.add(product);
+                    resource.setProducts(products);
+                    
+                    Resource savedResource = resourceRepository.save(resource);
+                    List<Resource> resources = product.getResources();
+                    resources.add(savedResource);
+                    product.setResources(resources);
+                    product.setUpdatedAt(LocalDateTime.now());
+                    
+                    return productRepository.save(product);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error adding resource to product", e);
+        }
+        return null;
+    }
+
+    @Override
+    public Product addResourcesToProduct(String productId, List<String> resourceIds) {
+        try {
+            Product product = getProductById(productId);
+            if (product != null && resourceIds != null && !resourceIds.isEmpty()) {
+                List<Resource> existingResources = product.getResources();
+                for (String resourceId : resourceIds) {
+                    Resource resource = resourceRepository.getById(Integer.valueOf(resourceId));
+                    if (resource != null && !existingResources.contains(resource)) {
+                        existingResources.add(resource);
+                    }
+                }
+                product.setResources(existingResources);
+                product.setUpdatedAt(LocalDateTime.now());
+                return productRepository.save(product);
+            }
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid resource ID format in the list", e);
+        }
+        return null;
+    }
+
+    @Override
+    public Product replaceProductResources(String productId, List<String> resourceIds) {
+        try {
+            Product product = getProductById(productId);
+            if (product != null && resourceIds != null) {
+                List<Resource> newResources = new ArrayList<>();
+                for (String resourceId : resourceIds) {
+                    Resource resource = resourceRepository.getById(Integer.valueOf(resourceId));
+                    if (resource != null) {
+                        newResources.add(resource);
+                    }
+                }
+                product.setResources(newResources);
+                product.setUpdatedAt(LocalDateTime.now());
+                return productRepository.save(product);
+            }
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid resource ID format in the list", e);
         }
         return null;
     }

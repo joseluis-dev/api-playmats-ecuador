@@ -2,18 +2,27 @@ package com.playmatsec.app.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.controller.model.ResourceDTO;
+import com.playmatsec.app.controller.model.ResourceUploadDTO;
 import com.playmatsec.app.repository.ProductRepository;
 import com.playmatsec.app.repository.ResourceRepository;
+import com.playmatsec.app.repository.CategoryRepository;
+import com.playmatsec.app.repository.AttributeRepository;
 import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.model.Resource;
+import com.playmatsec.app.repository.model.Category;
+import com.playmatsec.app.repository.model.Attribute;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,6 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 public class ResourceServiceImpl implements ResourceService {
     private final ResourceRepository resourceRepository;
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private final AttributeRepository attributeRepository;
+    private final CloudinaryService cloudinaryService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -46,10 +58,28 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public Resource createResource(ResourceDTO request) {
-        if (request != null && StringUtils.hasLength(request.getName())) {
-            Resource resource = objectMapper.convertValue(request, Resource.class);
-            return resourceRepository.save(resource);
+    public Resource createResource(MultipartFile file, ResourceUploadDTO uploadDTO) {
+        if (file != null && uploadDTO.getType() != null) {
+            try {
+                String folder = "resources/";
+                Map<String, String> uploadResult = cloudinaryService.uploadImage(file, folder);
+                
+                if (uploadResult != null) {
+                    Resource resource = new Resource();
+                    resource.setName(file.getOriginalFilename());
+                    resource.setUrl(uploadResult.get("url"));
+                    resource.setThumbnail(uploadResult.get("thumbnail"));
+                    resource.setWatermark(uploadResult.get("watermark"));
+                    resource.setHosting("cloudinary");
+                    resource.setType(uploadDTO.getType());
+                    resource.setIsBanner(uploadDTO.getIsBanner());
+                    resource.setPublicId(uploadResult.get("publicId"));
+
+                    return resourceRepository.save(resource);
+                }
+            } catch (Exception e) {
+                log.error("Error creating resource", e);
+            }
         }
         return null;
     }
@@ -93,6 +123,9 @@ public class ResourceServiceImpl implements ResourceService {
         Resource resource = getResourceById(id);
         if (resource != null) {
             resource.update(request);
+            if (request.getProducts() != null && !request.getProducts().isEmpty()) {
+                resource.setProducts(request.getProducts());
+            }
             resourceRepository.save(resource);
             return resource;
         }
@@ -112,5 +145,115 @@ public class ResourceServiceImpl implements ResourceService {
             log.error("Invalid resource ID format: {}", id, e);
         }
         return false;
+    }
+
+    @Override
+    public List<Category> getResourceCategories(String resourceId) {
+        Resource resource = getResourceById(resourceId);
+        if (resource != null) {
+            return resource.getCategories();
+        }
+        return null;
+    }
+
+    @Override
+    public Resource addCategoriesToResource(String resourceId, List<String> categoryIds) {
+        try {
+            Resource resource = getResourceById(resourceId);
+            if (resource != null && categoryIds != null && !categoryIds.isEmpty()) {
+                List<Category> existingCategories = resource.getCategories();
+                for (String categoryId : categoryIds) {
+                    Category category = getCategoryById(Integer.parseInt(categoryId));
+                    if (category != null && !existingCategories.contains(category)) {
+                        existingCategories.add(category);
+                    }
+                }
+                resource.setCategories(existingCategories);
+                return resourceRepository.save(resource);
+            }
+        } catch (NumberFormatException e) {
+            log.error("Invalid category ID format in the list", e);
+        }
+        return null;
+    }
+
+    @Override
+    public Resource replaceResourceCategories(String resourceId, List<String> categoryIds) {
+        try {
+            Resource resource = getResourceById(resourceId);
+            if (resource != null && categoryIds != null) {
+                List<Category> newCategories = new ArrayList<>();
+                for (String categoryId : categoryIds) {
+                    Category category = getCategoryById(Integer.parseInt(categoryId));
+                    if (category != null) {
+                        newCategories.add(category);
+                    }
+                }
+                resource.setCategories(newCategories);
+                return resourceRepository.save(resource);
+            }
+        } catch (NumberFormatException e) {
+            log.error("Invalid category ID format in the list", e);
+        }
+        return null;
+    }
+
+    @Override
+    public List<Attribute> getResourceAttributes(String resourceId) {
+        Resource resource = getResourceById(resourceId);
+        if (resource != null) {
+            return resource.getAttributes();
+        }
+        return null;
+    }
+
+    @Override
+    public Resource addAttributesToResource(String resourceId, List<String> attributeIds) {
+        try {
+            Resource resource = getResourceById(resourceId);
+            if (resource != null && attributeIds != null && !attributeIds.isEmpty()) {
+                List<Attribute> existingAttributes = resource.getAttributes();
+                for (String attributeId : attributeIds) {
+                    Attribute attribute = getAttributeById(Long.parseLong(attributeId));
+                    if (attribute != null && !existingAttributes.contains(attribute)) {
+                        existingAttributes.add(attribute);
+                    }
+                }
+                resource.setAttributes(existingAttributes);
+                return resourceRepository.save(resource);
+            }
+        } catch (NumberFormatException e) {
+            log.error("Invalid attribute ID format in the list", e);
+        }
+        return null;
+    }
+
+    @Override
+    public Resource replaceResourceAttributes(String resourceId, List<String> attributeIds) {
+        try {
+            Resource resource = getResourceById(resourceId);
+            if (resource != null && attributeIds != null) {
+                List<Attribute> newAttributes = new ArrayList<>();
+                for (String attributeId : attributeIds) {
+                    Attribute attribute = getAttributeById(Long.parseLong(attributeId));
+                    if (attribute != null) {
+                        newAttributes.add(attribute);
+                    }
+                }
+                resource.setAttributes(newAttributes);
+                return resourceRepository.save(resource);
+            }
+        } catch (NumberFormatException e) {
+            log.error("Invalid attribute ID format in the list", e);
+        }
+        return null;
+    }
+
+    private Category getCategoryById(Integer id) {
+        return categoryRepository.getById(id);
+    }
+
+    private Attribute getAttributeById(Long id) {
+        return attributeRepository.getById(id);
     }
 }
