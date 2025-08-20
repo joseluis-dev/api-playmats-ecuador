@@ -7,4 +7,5 @@ import lombok.Data;
 public class ResourceUploadDTO {
     private ResourceType type;
     private Boolean isBanner;
+    private String name;
 }

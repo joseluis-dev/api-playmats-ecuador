@@ -3,6 +3,7 @@ package com.playmatsec.app.service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -13,7 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
-import com.playmatsec.app.controller.model.ResourceDTO;
+import com.playmatsec.app.repository.utils.Consts.ResourceType;
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
 import com.playmatsec.app.repository.ProductRepository;
 import com.playmatsec.app.repository.ResourceRepository;
@@ -59,19 +60,29 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Resource createResource(MultipartFile file, ResourceUploadDTO uploadDTO) {
-        if (file != null && uploadDTO.getType() != null) {
+        if (file != null && !file.isEmpty()) {
             try {
+                // Determinar el tipo de archivo automáticamente
+                ResourceType detectedType = determineResourceType(file);
+                
                 String folder = "resources/";
                 Map<String, String> uploadResult = cloudinaryService.uploadImage(file, folder);
                 
                 if (uploadResult != null) {
                     Resource resource = new Resource();
-                    resource.setName(file.getOriginalFilename());
+                    
+                    // Usar nombre personalizado o nombre original del archivo
+                    String resourceName = uploadDTO.getName();
+                    if (resourceName == null || resourceName.isEmpty()) {
+                        resourceName = file.getOriginalFilename();
+                    }
+                    
+                    resource.setName(resourceName);
                     resource.setUrl(uploadResult.get("url"));
                     resource.setThumbnail(uploadResult.get("thumbnail"));
                     resource.setWatermark(uploadResult.get("watermark"));
                     resource.setHosting("cloudinary");
-                    resource.setType(uploadDTO.getType());
+                    resource.setType(detectedType);
                     resource.setIsBanner(uploadDTO.getIsBanner());
                     resource.setPublicId(uploadResult.get("publicId"));
 
@@ -118,20 +129,90 @@ public class ResourceServiceImpl implements ResourceService {
         return null;
     }
 
+    // @Override
+    // public Resource updateResource(String id, ResourceDTO request) {
+    //     Resource resource = getResourceById(id);
+    //     if (resource != null) {
+    //         resource.update(request);
+    //         if (request.getProducts() != null && !request.getProducts().isEmpty()) {
+    //             resource.setProducts(request.getProducts());
+    //         }
+    //         resourceRepository.save(resource);
+    //         return resource;
+    //     }
+    //     return null;
+    // }
+
     @Override
-    public Resource updateResource(String id, ResourceDTO request) {
+    public Resource updateResourceWithFile(String id, MultipartFile file, ResourceUploadDTO uploadDTO) {
         Resource resource = getResourceById(id);
-        if (resource != null) {
-            resource.update(request);
-            if (request.getProducts() != null && !request.getProducts().isEmpty()) {
-                resource.setProducts(request.getProducts());
+        if (resource != null && file != null && !file.isEmpty()) {
+            try {
+                // Guardar el publicId para eliminarlo después de subir la nueva imagen
+                String oldPublicId = resource.getPublicId();
+                
+                // Determinar el tipo de archivo automáticamente
+                ResourceType detectedType = determineResourceType(file);
+                
+                // Subir la nueva imagen a Cloudinary
+                String folder = "resources/";
+                Map<String, String> uploadResult = cloudinaryService.uploadImage(file, folder);
+                
+                if (uploadResult != null) {
+                    // Si la carga fue exitosa, eliminar la imagen anterior
+                    if (oldPublicId != null && !oldPublicId.isEmpty()) {
+                        boolean deleted = cloudinaryService.deleteImage(oldPublicId);
+                        if (!deleted) {
+                            log.warn("No se pudo eliminar la imagen anterior de Cloudinary: {}", oldPublicId);
+                        }
+                    }
+                    
+                    // Mantener el nombre actual si uploadDTO.getName() es null
+                    String resourceName = uploadDTO.getName();
+                    if (resourceName == null || resourceName.isEmpty()) {
+                        // Si el recurso ya tiene un nombre, lo mantenemos
+                        // Si no, usamos el nombre del archivo
+                        resourceName = (resource.getName() != null && !resource.getName().isEmpty()) 
+                            ? resource.getName() 
+                            : file.getOriginalFilename();
+                    }
+                    
+                    // Actualizar los campos del recurso
+                    resource.setName(resourceName);
+                    resource.setUrl(uploadResult.get("url"));
+                    resource.setThumbnail(uploadResult.get("thumbnail"));
+                    resource.setWatermark(uploadResult.get("watermark"));
+                    resource.setHosting("cloudinary");
+                    
+                    // Usar el tipo detectado automáticamente
+                    resource.setType(detectedType);
+                    
+                    // Solo actualizamos isBanner si se proporciona un valor
+                    if (uploadDTO.getIsBanner() != null) {
+                        resource.setIsBanner(uploadDTO.getIsBanner());
+                    }
+                    
+                    resource.setPublicId(uploadResult.get("publicId"));
+                    
+                    return resourceRepository.save(resource);
+                }
+            } catch (Exception e) {
+                log.error("Error updating resource with file", e);
+            }
+            return null;
+        } else if (resource != null && (file == null || file.isEmpty())) {
+            // Si no se proporciona un archivo, simplemente actualizamos los campos de tipo nombre y banner
+            if (uploadDTO.getName() != null) {
+                resource.setName(uploadDTO.getName());
+            }
+            if (uploadDTO.getIsBanner() != null) {
+                resource.setIsBanner(uploadDTO.getIsBanner());
             }
             resourceRepository.save(resource);
-            return resource;
         }
-        return null;
+        return resource;
     }
-
+    
     @Override
     public Boolean deleteResource(String id) {
         try {
@@ -256,5 +337,62 @@ public class ResourceServiceImpl implements ResourceService {
 
     private Attribute getAttributeById(Long id) {
         return attributeRepository.getById(id);
+    }
+    
+    /**
+     * Determina automáticamente el tipo de recurso basado en el contenido del archivo
+     * 
+     * @param file El archivo subido
+     * @return El tipo de recurso detectado
+     */
+    private ResourceType determineResourceType(MultipartFile file) {
+        if (file == null) {
+            return ResourceType.IMAGE; // Por defecto, si no hay archivo
+        }
+        
+        String contentType = file.getContentType();
+        String fileName = file.getOriginalFilename();
+        
+        if (contentType == null && fileName == null) {
+            return ResourceType.IMAGE; // Por defecto, si no hay información
+        }
+        
+        // Primero intentamos detectar por el contentType
+        if (contentType != null) {
+            String lowerContentType = contentType.toLowerCase(Locale.ROOT);
+            
+            if (lowerContentType.startsWith("image/")) {
+                return ResourceType.IMAGE;
+            } else if (lowerContentType.startsWith("video/")) {
+                return ResourceType.VIDEO;
+            } else if (lowerContentType.equals("application/pdf")) {
+                return ResourceType.PDF;
+            } else if (lowerContentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document") || 
+                       lowerContentType.equals("application/msword")) {
+                return ResourceType.DOCX;
+            }
+        }
+        
+        // Si no se pudo detectar por contentType, intentamos por la extensión del nombre
+        if (fileName != null) {
+            String lowerFileName = fileName.toLowerCase(Locale.ROOT);
+            
+            if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg") || 
+                lowerFileName.endsWith(".png") || lowerFileName.endsWith(".gif") || 
+                lowerFileName.endsWith(".webp") || lowerFileName.endsWith(".svg")) {
+                return ResourceType.IMAGE;
+            } else if (lowerFileName.endsWith(".mp4") || lowerFileName.endsWith(".mov") || 
+                       lowerFileName.endsWith(".avi") || lowerFileName.endsWith(".webm") || 
+                       lowerFileName.endsWith(".mkv")) {
+                return ResourceType.VIDEO;
+            } else if (lowerFileName.endsWith(".pdf")) {
+                return ResourceType.PDF;
+            } else if (lowerFileName.endsWith(".docx") || lowerFileName.endsWith(".doc")) {
+                return ResourceType.DOCX;
+            }
+        }
+        
+        // Si no se pudo determinar, por defecto usamos IMAGE
+        return ResourceType.IMAGE;
     }
 }

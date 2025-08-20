@@ -17,12 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.playmatsec.app.controller.model.ResourceDTO;
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
 import com.playmatsec.app.controller.model.CategoryIdsDTO;
 import com.playmatsec.app.controller.model.AttributeIdsDTO;
 import com.playmatsec.app.repository.model.Resource;
-import com.playmatsec.app.repository.utils.Consts.ResourceType;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Attribute;
 import com.playmatsec.app.service.ResourceService;
@@ -68,15 +66,20 @@ public class ResourcesController {
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
+  /**
+   * Crea un nuevo recurso subiendo un archivo a Cloudinary.
+   * El tipo de archivo se detecta automáticamente basado en el contenido.
+   */
   @PostMapping("/resources")
   public ResponseEntity<Resource> createResource(@RequestHeader Map<String, String> headers,
       @RequestParam("file") MultipartFile file,
-      @RequestParam("type") ResourceType type,
-      @RequestParam("isBanner") Boolean isBanner) {
+      @RequestParam("isBanner") Boolean isBanner,
+      @RequestParam(value = "name", required = false) String name) {
     log.info("headers: {}", headers);
     ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
-    uploadDTO.setType(type);
+    // El tipo será detectado automáticamente basado en el archivo
     uploadDTO.setIsBanner(isBanner);
+    uploadDTO.setName(name);
     Resource createdResource = resourceService.createResource(file, uploadDTO);
     return createdResource != null ? ResponseEntity.ok(createdResource) : ResponseEntity.badRequest().build();
   }
@@ -89,12 +92,43 @@ public class ResourcesController {
     return updatedResource != null ? ResponseEntity.ok(updatedResource) : ResponseEntity.notFound().build();
   }
 
-  @PutMapping("/resources/{id}")
-  public ResponseEntity<Resource> replaceResource(@RequestHeader Map<String, String> headers, @PathVariable String id,
-      @RequestBody ResourceDTO resource) {
+  // @PutMapping("/resources/{id}")
+  // public ResponseEntity<Resource> replaceResource(@RequestHeader Map<String, String> headers, @PathVariable String id,
+  //     @RequestBody ResourceDTO resource) {
+  //   log.info("headers: {}", headers);
+  //   Resource replacedResource = resourceService.updateResource(id, resource);
+  //   return replacedResource != null ? ResponseEntity.ok(replacedResource) : ResponseEntity.notFound().build();
+  // }
+  
+  /**
+   * Actualiza un recurso existente con un nuevo archivo.
+   * Este endpoint primero carga el nuevo archivo a Cloudinary y luego,
+   * si la carga es exitosa, elimina el archivo anterior y actualiza los datos del recurso.
+   * El tipo de archivo se detecta automáticamente basado en el contenido.
+   * 
+   * @param headers Cabeceras de la petición
+   * @param id ID del recurso a actualizar
+   * @param file Nuevo archivo para el recurso
+   * @param isBanner Indica si el recurso es un banner
+   * @param name Nombre del recurso (opcional)
+   * @return El recurso actualizado
+   */
+  @PutMapping(value = "/resources/{id}", consumes = "multipart/form-data")
+  public ResponseEntity<Resource> updateResourceWithFile(
+      @RequestHeader Map<String, String> headers,
+      @PathVariable String id,
+      @RequestParam("file") MultipartFile file,
+      @RequestParam("isBanner") Boolean isBanner,
+      @RequestParam(value = "name", required = false) String name) {
     log.info("headers: {}", headers);
-    Resource replacedResource = resourceService.updateResource(id, resource);
-    return replacedResource != null ? ResponseEntity.ok(replacedResource) : ResponseEntity.notFound().build();
+    
+    ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
+    // El tipo será detectado automáticamente basado en el archivo
+    uploadDTO.setIsBanner(isBanner);
+    uploadDTO.setName(name);
+    
+    Resource updatedResource = resourceService.updateResourceWithFile(id, file, uploadDTO);
+    return updatedResource != null ? ResponseEntity.ok(updatedResource) : ResponseEntity.notFound().build();
   }
 
   // Categories endpoints

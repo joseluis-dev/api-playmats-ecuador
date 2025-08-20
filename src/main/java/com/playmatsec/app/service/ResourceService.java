@@ -7,7 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.playmatsec.app.repository.model.Resource;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Attribute;
-import com.playmatsec.app.controller.model.ResourceDTO;
+// import com.playmatsec.app.controller.model.ResourceDTO;
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
 
 public interface ResourceService {
@@ -15,7 +15,8 @@ public interface ResourceService {
     Resource getResourceById(String id);
     Resource createResource(MultipartFile file, ResourceUploadDTO uploadDTO);
     Resource updateResource(String id, String updateRequest);
-    Resource updateResource(String id, ResourceDTO resource);
+    // Resource updateResource(String id, ResourceDTO resource);
+    Resource updateResourceWithFile(String id, MultipartFile file, ResourceUploadDTO uploadDTO);
     Boolean deleteResource(String id);
 
     // Category management methods
