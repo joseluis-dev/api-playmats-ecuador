@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 public class ResourceUploadDTO {
     private ResourceType type;
-    private Boolean isBanner;
     private String name;
+    private Boolean isBanner; // Mantenemos por compatibilidad, pero se usará en ResourceProduct
+    private String productId; // ID del producto al que se asociará el recurso
 }

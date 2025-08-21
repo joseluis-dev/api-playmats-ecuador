@@ -5,9 +5,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
+import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.playmatsec.app.repository.utils.Consts.ResourceType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,12 +19,14 @@ import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.controller.model.ProductDTO;
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
+import com.playmatsec.app.controller.model.ResourceProductDTO;
 import com.playmatsec.app.repository.ProductRepository;
 import com.playmatsec.app.repository.CategoryRepository;
 import com.playmatsec.app.repository.AttributeRepository;
 import com.playmatsec.app.repository.ResourceRepository;
 import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.model.Resource;
+import com.playmatsec.app.repository.model.ResourceProduct;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Attribute;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +41,13 @@ public class ProductServiceImpl implements ProductService {
     private final AttributeRepository attributeRepository;
     private final ResourceRepository resourceRepository;
     private final CloudinaryService cloudinaryService;
+    private final ResourceProductService resourceProductService;
     private final ObjectMapper objectMapper;
 
     @Override
     public List<Product> getProducts(String name, String description, Double price, Boolean isCustomizable) {
-        if (StringUtils.hasLength(name) || StringUtils.hasLength(description) || price != null || isCustomizable != null) {
+        if (StringUtils.hasLength(name) || StringUtils.hasLength(description) || price != null
+                || isCustomizable != null) {
             return productRepository.search(name, description, price, isCustomizable);
         }
         List<Product> products = productRepository.getProducts();
@@ -61,11 +68,10 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public Product createProduct(ProductDTO request) {
         if (request != null
-            && StringUtils.hasLength(request.getName())
-            && StringUtils.hasLength(request.getDescription())
-            && request.getPrice() != null
-            && request.getIsCustomizable() != null
-            ) {
+                && StringUtils.hasLength(request.getName())
+                && StringUtils.hasLength(request.getDescription())
+                && request.getPrice() != null
+                && request.getIsCustomizable() != null) {
             Product product = objectMapper.convertValue(request, Product.class);
             product.setId(UUID.randomUUID());
             product.setCreatedAt(LocalDateTime.now());
@@ -226,10 +232,10 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<com.playmatsec.app.repository.model.Resource> getProductResources(String productId) {
+    public List<Product.ResourceWithBanner> getProductResources(String productId) {
         Product product = getProductById(productId);
         if (product != null) {
-            return product.getResources();
+            return product.getProductResources();
         }
         return null;
     }
@@ -239,30 +245,41 @@ public class ProductServiceImpl implements ProductService {
         try {
             Product product = getProductById(productId);
             if (product != null && file != null && !file.isEmpty()) {
+                // Determinar el tipo de archivo automáticamente
+                ResourceType detectedType = determineResourceType(file);
+
                 String folder = "products/";
                 Map<String, String> uploadResult = cloudinaryService.uploadImage(file, folder);
-                
+
                 if (uploadResult != null) {
+                    // Usar nombre personalizado o nombre original del archivo
+                    String resourceName = uploadDTO.getName();
+                    if (resourceName == null || resourceName.isEmpty()) {
+                        resourceName = file.getOriginalFilename();
+                    }
+
                     Resource resource = new Resource();
-                    resource.setName(file.getOriginalFilename());
+                    resource.setName(resourceName);
                     resource.setUrl(uploadResult.get("url"));
                     resource.setThumbnail(uploadResult.get("thumbnail"));
                     resource.setWatermark(uploadResult.get("watermark"));
                     resource.setHosting("cloudinary");
-                    resource.setType(uploadDTO.getType());
-                    resource.setIsBanner(uploadDTO.getIsBanner());
+                    resource.setType(detectedType);
                     resource.setPublicId(uploadResult.get("publicId"));
-                    
-                    List<Product> products = new ArrayList<>();
-                    products.add(product);
-                    resource.setProducts(products);
-                    
+
+                    // Save the resource first
                     Resource savedResource = resourceRepository.save(resource);
-                    List<Resource> resources = product.getResources();
-                    resources.add(savedResource);
-                    product.setResources(resources);
+
+                    // Create the ResourceProduct relationship with isBanner property
+                    ResourceProductDTO resourceProductDTO = new ResourceProductDTO();
+                    resourceProductDTO.setResourceId(savedResource.getId().toString());
+                    resourceProductDTO.setProductId(productId);
+                    resourceProductDTO.setIsBanner(uploadDTO.getIsBanner());
+
+                    // Create the relationship
+                    resourceProductService.createResourceProduct(resourceProductDTO);
+
                     product.setUpdatedAt(LocalDateTime.now());
-                    
                     return productRepository.save(product);
                 }
             }
@@ -272,19 +289,90 @@ public class ProductServiceImpl implements ProductService {
         return null;
     }
 
+    /**
+     * Determina automáticamente el tipo de recurso basado en el contenido del
+     * archivo
+     * 
+     * @param file El archivo subido
+     * @return El tipo de recurso detectado
+     */
+    private ResourceType determineResourceType(MultipartFile file) {
+        if (file == null) {
+            return ResourceType.IMAGE; // Por defecto, si no hay archivo
+        }
+
+        String contentType = file.getContentType();
+        String fileName = file.getOriginalFilename();
+
+        if (contentType == null && fileName == null) {
+            return ResourceType.IMAGE; // Por defecto, si no hay información
+        }
+
+        // Primero intentamos detectar por el contentType
+        if (contentType != null) {
+            String lowerContentType = contentType.toLowerCase(Locale.ROOT);
+
+            if (lowerContentType.startsWith("image/")) {
+                return ResourceType.IMAGE;
+            } else if (lowerContentType.startsWith("video/")) {
+                return ResourceType.VIDEO;
+            } else if (lowerContentType.equals("application/pdf")) {
+                return ResourceType.PDF;
+            } else if (lowerContentType
+                    .equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document") ||
+                    lowerContentType.equals("application/msword")) {
+                return ResourceType.DOCX;
+            }
+        }
+
+        // Si no se pudo detectar por contentType, intentamos por la extensión del
+        // nombre
+        if (fileName != null) {
+            String lowerFileName = fileName.toLowerCase(Locale.ROOT);
+
+            if (lowerFileName.endsWith(".jpg") || lowerFileName.endsWith(".jpeg") ||
+                    lowerFileName.endsWith(".png") || lowerFileName.endsWith(".gif") ||
+                    lowerFileName.endsWith(".webp") || lowerFileName.endsWith(".svg")) {
+                return ResourceType.IMAGE;
+            } else if (lowerFileName.endsWith(".mp4") || lowerFileName.endsWith(".mov") ||
+                    lowerFileName.endsWith(".avi") || lowerFileName.endsWith(".webm") ||
+                    lowerFileName.endsWith(".mkv")) {
+                return ResourceType.VIDEO;
+            } else if (lowerFileName.endsWith(".pdf")) {
+                return ResourceType.PDF;
+            } else if (lowerFileName.endsWith(".docx") || lowerFileName.endsWith(".doc")) {
+                return ResourceType.DOCX;
+            }
+        }
+
+        // Si no se pudo determinar, por defecto usamos IMAGE
+        return ResourceType.IMAGE;
+    }
+
     @Override
     public Product addResourcesToProduct(String productId, List<String> resourceIds) {
         try {
             Product product = getProductById(productId);
             if (product != null && resourceIds != null && !resourceIds.isEmpty()) {
-                List<Resource> existingResources = product.getResources();
                 for (String resourceId : resourceIds) {
+                    // Check if the resource exists
                     Resource resource = resourceRepository.getById(Integer.valueOf(resourceId));
-                    if (resource != null && !existingResources.contains(resource)) {
-                        existingResources.add(resource);
+
+                    // Check if the relationship already exists
+                    ResourceProduct existingRelationship = resourceProductService
+                            .getResourceProductByResourceIdAndProductId(resourceId, productId);
+
+                    // If resource exists and relationship doesn't exist yet, create it
+                    if (resource != null && existingRelationship == null) {
+                        ResourceProductDTO resourceProductDTO = new ResourceProductDTO();
+                        resourceProductDTO.setResourceId(resourceId);
+                        resourceProductDTO.setProductId(productId);
+                        resourceProductDTO.setIsBanner(false); // Default value for isBanner
+
+                        resourceProductService.createResourceProduct(resourceProductDTO);
                     }
                 }
-                product.setResources(existingResources);
+
                 product.setUpdatedAt(LocalDateTime.now());
                 return productRepository.save(product);
             }
@@ -299,14 +387,30 @@ public class ProductServiceImpl implements ProductService {
         try {
             Product product = getProductById(productId);
             if (product != null && resourceIds != null) {
-                List<Resource> newResources = new ArrayList<>();
+                // Get all current resource-product relationships
+                List<ResourceProduct> currentRelationships = resourceProductService
+                        .getResourceProductsByProductId(productId);
+
+                // Delete all existing relationships
+                if (currentRelationships != null && !currentRelationships.isEmpty()) {
+                    for (ResourceProduct rp : currentRelationships) {
+                        resourceProductService.deleteResourceProduct(rp.getId().toString());
+                    }
+                }
+
+                // Create new relationships for each resource ID
                 for (String resourceId : resourceIds) {
                     Resource resource = resourceRepository.getById(Integer.valueOf(resourceId));
                     if (resource != null) {
-                        newResources.add(resource);
+                        ResourceProductDTO resourceProductDTO = new ResourceProductDTO();
+                        resourceProductDTO.setResourceId(resourceId);
+                        resourceProductDTO.setProductId(productId);
+                        resourceProductDTO.setIsBanner(false); // Default value
+
+                        resourceProductService.createResourceProduct(resourceProductDTO);
                     }
                 }
-                product.setResources(newResources);
+
                 product.setUpdatedAt(LocalDateTime.now());
                 return productRepository.save(product);
             }
@@ -314,5 +418,79 @@ public class ProductServiceImpl implements ProductService {
             log.error("Invalid resource ID format in the list", e);
         }
         return null;
+    }
+    
+    @Override
+    public Boolean deleteResourceFromProduct(String productId, String resourceId) {
+        try {
+            // Validar que el producto exista
+            Product product = getProductById(productId);
+            if (product == null) {
+                log.warn("Producto no encontrado con ID: {}", productId);
+                return false;
+            }
+            
+            // Validar que el recurso exista
+            Integer rid = Integer.parseInt(resourceId);
+            Resource resource = resourceRepository.getById(rid);
+            if (resource == null) {
+                log.warn("Recurso no encontrado con ID: {}", resourceId);
+                return false;
+            }
+            
+            // Verificar si existe la relación entre producto y recurso
+            ResourceProduct resourceProduct = resourceProductService.getResourceProductByResourceIdAndProductId(resourceId, productId);
+            if (resourceProduct == null) {
+                log.warn("No existe relación entre el producto {} y el recurso {}", productId, resourceId);
+                return false;
+            }
+            
+            // Verificar si el recurso está asociado solo a este producto
+            List<ResourceProduct> allRelationships = resourceProductService.getResourceProductsByResourceId(resourceId);
+            boolean isOnlyAssociatedWithThisProduct = (allRelationships.size() == 1);
+            
+            // Eliminar la relación entre el producto y el recurso
+            boolean relationshipDeleted = resourceProductService.deleteResourceProductByResourceIdAndProductId(resourceId, productId);
+            
+            if (!relationshipDeleted) {
+                log.error("Error al eliminar la relación entre el producto {} y el recurso {}", productId, resourceId);
+                return false;
+            }
+            
+            // Si el recurso solo está asociado a este producto, eliminarlo también
+            if (isOnlyAssociatedWithThisProduct) {
+                String publicId = resource.getPublicId();
+                
+                // Primero eliminar el registro de la base de datos
+                resourceRepository.delete(resource);
+                
+                // Solo si se eliminó exitosamente de la base de datos, eliminar de Cloudinary
+                if (publicId != null && !publicId.isEmpty()) {
+                    boolean cloudinaryDeleted = cloudinaryService.deleteImage(publicId);
+                    if (!cloudinaryDeleted) {
+                        log.warn("No se pudo eliminar la imagen de Cloudinary con publicId: {}", publicId);
+                    }
+                }
+                
+                log.info("Recurso {} eliminado completamente (base de datos y Cloudinary) ya que solo estaba asociado al producto {}", resourceId, productId);
+            } else {
+                log.info("Solo se eliminó la relación entre el producto {} y el recurso {} ya que el recurso está asociado a otros productos", productId, resourceId);
+            }
+            
+            // Actualizar la fecha de actualización del producto
+            product.setUpdatedAt(LocalDateTime.now());
+            productRepository.save(product);
+            
+            return true;
+            
+        } catch (NumberFormatException e) {
+            log.error("ID de recurso inválido: {}", resourceId, e);
+        } catch (IllegalArgumentException e) {
+            log.error("ID de producto inválido: {}", productId, e);
+        } catch (Exception e) {
+            log.error("Error al eliminar el recurso {} del producto {}", resourceId, productId, e);
+        }
+        
+        return false;
     }
 }

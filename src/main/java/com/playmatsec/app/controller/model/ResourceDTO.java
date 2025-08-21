@@ -20,7 +20,5 @@ public class ResourceDTO {
     private String thumbnail;
     private String watermark;
     private String hosting;
-    private List<Product> products;
     private ResourceType type;
-    private Boolean isBanner;
 }

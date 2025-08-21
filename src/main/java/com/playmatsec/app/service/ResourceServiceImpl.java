@@ -16,12 +16,12 @@ import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.repository.utils.Consts.ResourceType;
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
-import com.playmatsec.app.repository.ProductRepository;
+import com.playmatsec.app.controller.model.ResourceProductDTO;
 import com.playmatsec.app.repository.ResourceRepository;
 import com.playmatsec.app.repository.CategoryRepository;
 import com.playmatsec.app.repository.AttributeRepository;
-import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.model.Resource;
+import com.playmatsec.app.repository.model.ResourceProduct;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Attribute;
 import lombok.RequiredArgsConstructor;
@@ -32,10 +32,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ResourceServiceImpl implements ResourceService {
     private final ResourceRepository resourceRepository;
-    private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final AttributeRepository attributeRepository;
     private final CloudinaryService cloudinaryService;
+    private final ResourceProductService resourceProductService;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -83,10 +83,26 @@ public class ResourceServiceImpl implements ResourceService {
                     resource.setWatermark(uploadResult.get("watermark"));
                     resource.setHosting("cloudinary");
                     resource.setType(detectedType);
-                    resource.setIsBanner(uploadDTO.getIsBanner());
                     resource.setPublicId(uploadResult.get("publicId"));
 
-                    return resourceRepository.save(resource);
+                    Resource savedResource = resourceRepository.save(resource);
+                    
+                    // Si se especificó un productId, crear la relación ResourceProduct
+                    if (uploadDTO.getProductId() != null && !uploadDTO.getProductId().isEmpty()) {
+                        try {
+                            // Crear una nueva relación ResourceProduct
+                            ResourceProductDTO resourceProductDTO = new ResourceProductDTO();
+                            resourceProductDTO.setResourceId(savedResource.getId().toString());
+                            resourceProductDTO.setProductId(uploadDTO.getProductId());
+                            resourceProductDTO.setIsBanner(uploadDTO.getIsBanner());
+                            
+                            resourceProductService.createResourceProduct(resourceProductDTO);
+                        } catch (Exception e) {
+                            log.error("Error creating resource-product relationship", e);
+                        }
+                    }
+                    
+                    return savedResource;
                 }
             } catch (Exception e) {
                 log.error("Error creating resource", e);
@@ -103,22 +119,9 @@ public class ResourceServiceImpl implements ResourceService {
                 JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
                 JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(resource)));
                 Resource patched = objectMapper.treeToValue(target, Resource.class);
-                if (patched.getProducts() == null) {
-                    patched.setProducts(resource.getProducts());
-                } else {
-                    List<Product> updatedProducts = new ArrayList<>();
-                    for (Product pDTO : patched.getProducts()) {
-                        if (pDTO.getId() == null) {
-                            throw new IllegalArgumentException("Cada product debe incluir id");
-                        }
-                        Product product = productRepository.getById(pDTO.getId());
-                        if (product == null) {
-                            throw new IllegalArgumentException("Product no encontrado: " + pDTO.getId());
-                        }
-                        updatedProducts.add(product);
-                    }
-                    patched.setProducts(updatedProducts);
-                }
+                
+                // Solo actualizamos los campos básicos del recurso
+                // La relación con productos se maneja a través de ResourceProduct
                 resourceRepository.save(patched);
                 return patched;
             } catch (JsonProcessingException | JsonPatchException e) {
@@ -187,28 +190,65 @@ public class ResourceServiceImpl implements ResourceService {
                     // Usar el tipo detectado automáticamente
                     resource.setType(detectedType);
                     
-                    // Solo actualizamos isBanner si se proporciona un valor
-                    if (uploadDTO.getIsBanner() != null) {
-                        resource.setIsBanner(uploadDTO.getIsBanner());
-                    }
-                    
                     resource.setPublicId(uploadResult.get("publicId"));
                     
-                    return resourceRepository.save(resource);
+                    Resource savedResource = resourceRepository.save(resource);
+                    
+                    // Si se proporciona un productId y un valor de isBanner, actualizar o crear la relación ResourceProduct
+                    if (uploadDTO.getProductId() != null && !uploadDTO.getProductId().isEmpty() && uploadDTO.getIsBanner() != null) {
+                        ResourceProduct existingRelation = resourceProductService.getResourceProductByResourceIdAndProductId(
+                            savedResource.getId().toString(), uploadDTO.getProductId());
+                        
+                        if (existingRelation != null) {
+                            // Actualizar la relación existente
+                            ResourceProductDTO updateDTO = new ResourceProductDTO();
+                            updateDTO.setIsBanner(uploadDTO.getIsBanner());
+                            resourceProductService.updateResourceProduct(existingRelation.getId().toString(), updateDTO);
+                        } else {
+                            // Crear una nueva relación
+                            ResourceProductDTO newRelationDTO = new ResourceProductDTO();
+                            newRelationDTO.setResourceId(savedResource.getId().toString());
+                            newRelationDTO.setProductId(uploadDTO.getProductId());
+                            newRelationDTO.setIsBanner(uploadDTO.getIsBanner());
+                            resourceProductService.createResourceProduct(newRelationDTO);
+                        }
+                    }
+                    
+                    return savedResource;
                 }
             } catch (Exception e) {
                 log.error("Error updating resource with file", e);
             }
             return null;
         } else if (resource != null && (file == null || file.isEmpty())) {
-            // Si no se proporciona un archivo, simplemente actualizamos los campos de tipo nombre y banner
+            // Si no se proporciona un archivo, simplemente actualizamos el nombre
             if (uploadDTO.getName() != null) {
                 resource.setName(uploadDTO.getName());
             }
-            if (uploadDTO.getIsBanner() != null) {
-                resource.setIsBanner(uploadDTO.getIsBanner());
+            
+            Resource savedResource = resourceRepository.save(resource);
+            
+            // Si se proporciona un productId y un valor de isBanner, actualizar o crear la relación ResourceProduct
+            if (uploadDTO.getProductId() != null && !uploadDTO.getProductId().isEmpty() && uploadDTO.getIsBanner() != null) {
+                ResourceProduct existingRelation = resourceProductService.getResourceProductByResourceIdAndProductId(
+                    savedResource.getId().toString(), uploadDTO.getProductId());
+                
+                if (existingRelation != null) {
+                    // Actualizar la relación existente
+                    ResourceProductDTO updateDTO = new ResourceProductDTO();
+                    updateDTO.setIsBanner(uploadDTO.getIsBanner());
+                    resourceProductService.updateResourceProduct(existingRelation.getId().toString(), updateDTO);
+                } else {
+                    // Crear una nueva relación
+                    ResourceProductDTO newRelationDTO = new ResourceProductDTO();
+                    newRelationDTO.setResourceId(savedResource.getId().toString());
+                    newRelationDTO.setProductId(uploadDTO.getProductId());
+                    newRelationDTO.setIsBanner(uploadDTO.getIsBanner());
+                    resourceProductService.createResourceProduct(newRelationDTO);
+                }
             }
-            resourceRepository.save(resource);
+            
+            return savedResource;
         }
         return resource;
     }
@@ -219,12 +259,19 @@ public class ResourceServiceImpl implements ResourceService {
             Integer resourceId = Integer.parseInt(id);
             Resource resource = resourceRepository.getById(resourceId);
             if (resource != null) {
-                cloudinaryService.deleteImage(resource.getPublicId());
+                String publicId = resource.getPublicId();
                 resourceRepository.delete(resource);
+                // Solo eliminar la imagen en Cloudinary si la eliminación en la base de datos fue exitosa
+                if (publicId != null && !publicId.isEmpty()) {
+                    cloudinaryService.deleteImage(publicId);
+                }
                 return true;
             }
         } catch (NumberFormatException e) {
             log.error("Invalid resource ID format: {}", id, e);
+        } catch (Exception e) {
+            log.error("Error deleting resource with ID: {}", id, e);
+            return false;
         }
         return false;
     }

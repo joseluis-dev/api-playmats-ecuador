@@ -73,13 +73,15 @@ public class ResourcesController {
   @PostMapping("/resources")
   public ResponseEntity<Resource> createResource(@RequestHeader Map<String, String> headers,
       @RequestParam("file") MultipartFile file,
-      @RequestParam("isBanner") Boolean isBanner,
-      @RequestParam(value = "name", required = false) String name) {
+      @RequestParam(value = "isBanner", required = false) Boolean isBanner,
+      @RequestParam(value = "name") String name,
+      @RequestParam(value = "productId", required = false) String productId) {
     log.info("headers: {}", headers);
     ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
     // El tipo será detectado automáticamente basado en el archivo
     uploadDTO.setIsBanner(isBanner);
     uploadDTO.setName(name);
+    uploadDTO.setProductId(productId);
     Resource createdResource = resourceService.createResource(file, uploadDTO);
     return createdResource != null ? ResponseEntity.ok(createdResource) : ResponseEntity.badRequest().build();
   }
@@ -117,15 +119,17 @@ public class ResourcesController {
   public ResponseEntity<Resource> updateResourceWithFile(
       @RequestHeader Map<String, String> headers,
       @PathVariable String id,
-      @RequestParam("file") MultipartFile file,
-      @RequestParam("isBanner") Boolean isBanner,
-      @RequestParam(value = "name", required = false) String name) {
+      @RequestParam(value = "file", required = false) MultipartFile file,
+      @RequestParam(value = "isBanner", required = false) Boolean isBanner,
+      @RequestParam(value = "name") String name,
+      @RequestParam(value = "productId", required = false) String productId) {
     log.info("headers: {}", headers);
     
     ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
     // El tipo será detectado automáticamente basado en el archivo
     uploadDTO.setIsBanner(isBanner);
     uploadDTO.setName(name);
+    uploadDTO.setProductId(productId);
     
     Resource updatedResource = resourceService.updateResourceWithFile(id, file, uploadDTO);
     return updatedResource != null ? ResponseEntity.ok(updatedResource) : ResponseEntity.notFound().build();

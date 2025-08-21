@@ -37,9 +37,8 @@ public class Product {
     private LocalDateTime updatedAt;
     private Boolean isCustomizable;
 
-    @ManyToMany(mappedBy = "products")
-    // @JsonIgnore
-    private List<Resource> resources;
+    @OneToMany(mappedBy = "product")
+    private List<ResourceProduct> resourceProducts;
     @ManyToMany
     @JoinTable(
         name = "product_categories",
@@ -68,5 +67,25 @@ public class Product {
         this.price = product.getPrice();
         this.isCustomizable = product.getIsCustomizable();
         this.updatedAt = LocalDateTime.now();
+    }
+    
+    // Método para obtener los recursos asociados al producto con información de banner
+    public List<ResourceWithBanner> getProductResources() {
+        if (resourceProducts == null || resourceProducts.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        
+        return resourceProducts.stream()
+            .map(rp -> new ResourceWithBanner(rp.getResource(), rp.getIsBanner()))
+            .collect(java.util.stream.Collectors.toList());
+    }
+    
+    // Clase interna para representar un recurso con su bandera isBanner
+    @lombok.Data
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    public static class ResourceWithBanner {
+        private Resource resource;
+        private Boolean isBanner;
     }
 }

@@ -16,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -40,19 +41,12 @@ public class Resource {
     private String watermark;
     private String hosting;
 
-    @ManyToMany
+    @OneToMany(mappedBy = "resource")
     @JsonIgnore
-    @JoinTable(
-        name = "resource_product",
-        joinColumns = @JoinColumn(name = "resource_id"),
-        inverseJoinColumns = @JoinColumn(name = "product_id")
-    )
-    private List<Product> products;
+    private List<ResourceProduct> resourceProducts;
 
     @Enumerated(EnumType.STRING)
     private ResourceType type;
-
-    private Boolean isBanner;
 
     @ManyToMany
     @JoinTable(
@@ -77,6 +71,6 @@ public class Resource {
         this.watermark = resource.getWatermark();
         this.hosting = resource.getHosting();
         this.type = resource.getType();
-        this.isBanner = resource.getIsBanner();
+        // isBanner se maneja ahora en ResourceProduct
     }
 }

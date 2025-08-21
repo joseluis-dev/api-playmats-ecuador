@@ -25,7 +25,6 @@ import com.playmatsec.app.controller.model.ResourceIdsDTO;
 import com.playmatsec.app.repository.model.Attribute;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Product;
-import com.playmatsec.app.repository.model.Resource;
 import com.playmatsec.app.repository.utils.Consts.ResourceType;
 import com.playmatsec.app.service.ProductService;
 
@@ -132,9 +131,9 @@ public class ProductsController {
 
   // Resources endpoints
   @GetMapping("/products/{id}/resources")
-  public ResponseEntity<List<Resource>> getProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id) {
+  public ResponseEntity<List<Product.ResourceWithBanner>> getProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id) {
     log.info("headers: {}", headers);
-    List<Resource> resources = productService.getProductResources(id);
+    List<Product.ResourceWithBanner> resources = productService.getProductResources(id);
     return resources != null ? ResponseEntity.ok(resources) : ResponseEntity.notFound().build();
   }
 
@@ -142,9 +141,9 @@ public class ProductsController {
   public ResponseEntity<Product> addProductResource(
     @RequestHeader Map<String, String> headers,
     @PathVariable String id,
-    @RequestParam("file") MultipartFile file,
-    @RequestParam("type") ResourceType type,
-    @RequestParam("isBanner") Boolean isBanner
+    @RequestParam(value = "file", required = true) MultipartFile file,
+    @RequestParam(value = "type", required = false) ResourceType type,
+    @RequestParam(value = "isBanner", required = false) Boolean isBanner
   ) {
     log.info("headers: {}", headers);
     ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
@@ -166,5 +165,24 @@ public class ProductsController {
     log.info("headers: {}", headers);
     Product updatedProduct = productService.replaceProductResources(id, request.getResourceIds());
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
+  }
+  
+  @DeleteMapping("/products/{id}/resources/{resourceId}")
+  public ResponseEntity<Map<String, Object>> deleteProductResource(
+    @RequestHeader Map<String, String> headers, 
+    @PathVariable String id, 
+    @PathVariable String resourceId) {
+    log.info("headers: {}", headers);
+    boolean deleted = productService.deleteResourceFromProduct(id, resourceId);
+    
+    if (deleted) {
+      Map<String, Object> response = Map.of(
+        "success", true,
+        "message", "Recurso eliminado correctamente del producto"
+      );
+      return ResponseEntity.ok(response);
+    } else {
+      return ResponseEntity.notFound().build();
+    }
   }
 }
