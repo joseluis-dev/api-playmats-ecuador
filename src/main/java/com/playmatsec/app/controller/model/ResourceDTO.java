@@ -1,8 +1,5 @@
 package com.playmatsec.app.controller.model;
 
-import java.util.List;
-
-import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.utils.Consts.ResourceType;
 
 import lombok.*;

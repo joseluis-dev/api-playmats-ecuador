@@ -1,9 +1,11 @@
 package com.playmatsec.app.service;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.fge.jsonpatch.JsonPatchException;
@@ -37,6 +39,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
             return shippingAddressRepository.search(user, fullname, phone, country, state, city, postalCode, addressOne, addressTwo, current);
         }
         List<ShippingAddress> addresses = shippingAddressRepository.getShippingAddresses();
+        addresses.sort((a, b) -> a.getId().compareTo(b.getId()));
         return addresses.isEmpty() ? null : addresses;
     }
 
@@ -76,6 +79,18 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
             if (request.getState().getId() != null) {
                 shippingAddress.setState(request.getState());
             }
+            if (request.getCurrent() != null && request.getCurrent()) {
+                List<ShippingAddress> userAddresses = getShippingAddresses(
+                    shippingAddress.getUser().getId() != null ? shippingAddress.getUser().getId().toString() : null,
+                    null, null, null, null, null, null, null, null, null
+                );
+                for (ShippingAddress addr : userAddresses) {
+                    if (!addr.getId().equals(shippingAddress.getId()) && Boolean.TRUE.equals(addr.getCurrent())) {
+                        addr.setCurrent(false);
+                        shippingAddressRepository.save(addr);
+                    }
+                }
+            }
             return shippingAddressRepository.save(shippingAddress);
         }
         return null;
@@ -86,20 +101,65 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
         ShippingAddress shippingAddress = getShippingAddressById(id);
         if (shippingAddress != null) {
             try {
-                JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
-                JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(shippingAddress)));
-                ShippingAddress patched = objectMapper.treeToValue(target, ShippingAddress.class);
-                if (patched.getCountry() != null && patched.getCountry().getId() != null) {
-                    Country country = countryRepository.getById(patched.getCountry().getId());
-                    patched.setCountry(country);
+                JsonNode requestNode = objectMapper.readTree(request);
+                JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(requestNode);
+
+                JsonNode currentNode = objectMapper.valueToTree(shippingAddress);
+                JsonNode patchedNode = jsonMergePatch.apply(currentNode);
+
+                objectMapper.readerForUpdating(shippingAddress).readValue(patchedNode.traverse());
+
+                // Resolver relaciones SOLO si vinieron en el payload
+                if (requestNode.has("user")) {
+                    JsonNode userNode = requestNode.get("user");
+                    if (userNode != null && !userNode.isNull()) {
+                        if (userNode.hasNonNull("id")) {
+                            UUID userId = UUID.fromString(userNode.get("id").asText()); // <-- evitar convertValue a User
+                            User user = userRepository.getById(userId);
+                            shippingAddress.setUser(user);
+                        } else if (userNode.isTextual()) {
+                            // Soportar también "user": "uuid"
+                            UUID userId = UUID.fromString(userNode.asText());
+                            User user = userRepository.getById(userId);
+                            shippingAddress.setUser(user);
+                        } else {
+                            shippingAddress.setUser(null);
+                        }
+                    }
                 }
-                if (patched.getState() != null && patched.getState().getId() != null) {
-                    State state = stateRepository.getById(patched.getState().getId());
-                    patched.setState(state);
+                if (requestNode.has("country")) {
+                    JsonNode countryNode = requestNode.get("country");
+                    if (countryNode != null && !countryNode.isNull() && countryNode.hasNonNull("id")) {
+                        Country country = countryRepository.getById(countryNode.get("id").asInt());
+                        shippingAddress.setCountry(country);
+                    } else if (countryNode == null || countryNode.isNull()) {
+                        shippingAddress.setCountry(null);
+                    }
                 }
-                shippingAddressRepository.save(patched);
-                return patched;
-            } catch (JsonProcessingException | JsonPatchException e) {
+                if (requestNode.has("state")) {
+                    JsonNode stateNode = requestNode.get("state");
+                    if (stateNode != null && !stateNode.isNull() && stateNode.hasNonNull("id")) {
+                        State state = stateRepository.getById(stateNode.get("id").asInt());
+                        shippingAddress.setState(state);
+                    } else if (stateNode == null || stateNode.isNull()) {
+                        shippingAddress.setState(null);
+                    }
+                }
+                if (requestNode.has("current") && requestNode.get("current").asBoolean(true)) {
+                    List<ShippingAddress> userAddresses = getShippingAddresses(
+                        shippingAddress.getUser().getId() != null ? shippingAddress.getUser().getId().toString() : null,
+                        null, null, null, null, null, null, null, null, null
+                    );
+                    for (ShippingAddress addr : userAddresses) {
+                        if (!addr.getId().equals(shippingAddress.getId()) && Boolean.TRUE.equals(addr.getCurrent())) {
+                            addr.setCurrent(false);
+                            shippingAddressRepository.save(addr);
+                        }
+                    }
+                }
+                shippingAddressRepository.save(shippingAddress);
+                return shippingAddress;
+            } catch (JsonPatchException | IOException e) {
                 log.error("Error updating shipping address {}", id, e);
                 return null;
             }
@@ -111,6 +171,10 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
     public ShippingAddress updateShippingAddress(String id, ShippingAddressDTO request) {
         ShippingAddress shippingAddress = getShippingAddressById(id);
         if (shippingAddress != null) {
+            if (request.getUser() != null && request.getUser().getId() != null) {
+                User user = userRepository.getById(request.getUser().getId());
+                shippingAddress.setUser(user);
+            }
             if (request.getCountry() != null && request.getCountry().getId() != null) {
                 Country country = countryRepository.getById(request.getCountry().getId());
                 shippingAddress.setCountry(country);
@@ -118,6 +182,18 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
             if (request.getState() != null && request.getState().getId() != null) {
                 State state = stateRepository.getById(request.getState().getId());
                 shippingAddress.setState(state);
+            }
+            if (request.getCurrent() != null && request.getCurrent()) {
+                List<ShippingAddress> userAddresses = getShippingAddresses(
+                    shippingAddress.getUser().getId() != null ? shippingAddress.getUser().getId().toString() : null,
+                    null, null, null, null, null, null, null, null, null
+                );
+                for (ShippingAddress addr : userAddresses) {
+                    if (!addr.getId().equals(shippingAddress.getId()) && Boolean.TRUE.equals(addr.getCurrent())) {
+                        addr.setCurrent(false);
+                        shippingAddressRepository.save(addr);
+                    }
+                }
             }
             shippingAddress.update(request);
             shippingAddressRepository.save(shippingAddress);
