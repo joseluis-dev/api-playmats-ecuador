@@ -33,15 +33,13 @@ public class CartController {
   @GetMapping("/carts")
   public ResponseEntity<List<Cart>> getCarts(
     @RequestHeader Map<String, String> headers,
-    @RequestParam(required = false) String userId,
-    @RequestParam(required = false) Integer quantity,
-    @RequestParam(required = false) BigDecimal price,
-    @RequestParam(required = false) BigDecimal subtotal,
+    @RequestParam(required = false) String user,
+  @RequestParam(required = false) BigDecimal total,
     @RequestParam(required = false) String createdAt,
     @RequestParam(required = false) String updatedAt
   ) {
     log.info("headers: {}", headers);
-    List<Cart> carts = cartService.getCarts(userId, quantity, price, subtotal, createdAt, updatedAt);
+  List<Cart> carts = cartService.getCarts(user, total, createdAt, updatedAt);
     return carts != null ? ResponseEntity.ok(carts) : ResponseEntity.ok(Collections.emptyList());
   }
 

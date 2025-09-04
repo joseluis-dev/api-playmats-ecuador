@@ -36,9 +36,13 @@ public class CartRepository {
         repository.delete(cart);
     }
 
-    public List<Cart> search(String userId, Integer quantity, BigDecimal price, BigDecimal subtotal, Date createdAt, Date updatedAt) {
+    public List<Cart> search(String user, BigDecimal total, Date createdAt, Date updatedAt) {
+        UUID userId = null;
+        if (user != null) {
+            userId = UUID.fromString(user);
+        }
         CartSearchCriteria spec = new CartSearchCriteria();
-        if (StringUtils.isNotBlank(userId)) {
+        if (StringUtils.isNotBlank(user)) {
             spec.add(new SearchStatement(CartConsts.USER + ".id", userId, SearchOperation.EQUAL));
         }
         if (createdAt != null) {
@@ -47,14 +51,8 @@ public class CartRepository {
         if (updatedAt != null) {
             spec.add(new SearchStatement(CartConsts.UPDATED_AT, updatedAt, SearchOperation.EQUAL));
         }
-        if (quantity != null) {
-            spec.add(new SearchStatement(CartConsts.QUANTITY, quantity, SearchOperation.EQUAL));
-        }
-        if (price != null) {
-            spec.add(new SearchStatement(CartConsts.PRICE, price, SearchOperation.EQUAL));
-        }
-        if (subtotal != null) {
-            spec.add(new SearchStatement(CartConsts.SUBTOTAL, subtotal, SearchOperation.EQUAL));
+        if (total != null) {
+            spec.add(new SearchStatement(CartConsts.TOTAL, total, SearchOperation.EQUAL));
         }
         return repository.findAll(spec);
     }

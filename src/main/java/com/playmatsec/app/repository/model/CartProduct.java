@@ -2,60 +2,56 @@ package com.playmatsec.app.repository.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.playmatsec.app.controller.model.CartDTO;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.PreRemove;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "cart")
+@Table(name = "cart_products")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Cart {
+public class CartProduct {
     @Id
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
-    @JsonBackReference(value = "user-cart")
-    private User user;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cart_id")
+    @JsonBackReference("cart-cartProducts")
+    private Cart cart;
 
-    private BigDecimal total;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "product_id")
+    @JsonBackReference("product-cartProducts")
+    private Product product;
+
+    private Integer quantity;
+    private BigDecimal price;
+    private BigDecimal subtotal;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "cart", cascade = { CascadeType.MERGE, CascadeType.PERSIST }, orphanRemoval = true)
-    @JsonManagedReference("cart-cartProducts")
-    private List<CartProduct> cartProducts;
-
-    public void update(CartDTO cart) {
-        this.total = cart.getTotal();
+    public void update(Integer quantity, BigDecimal price, BigDecimal subtotal) {
+        this.quantity = quantity;
+        this.price = price;
+        this.subtotal = subtotal;
         this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreRemove
-    private void preRemove() {
-        if (user != null) user.setCart(null);
-    if (cartProducts != null) cartProducts.clear();
     }
 
     @PrePersist
