@@ -25,6 +25,8 @@ import com.playmatsec.app.repository.UserRepository;
 import com.playmatsec.app.repository.model.Cart;
 import com.playmatsec.app.repository.model.CartProduct;
 import com.playmatsec.app.repository.model.User;
+import com.playmatsec.app.repository.ProductRepository;
+import com.playmatsec.app.repository.model.Product;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,7 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final ProductRepository productRepository;
 
     @Override
     public List<Cart> getCarts(String user, BigDecimal total, String createdAt, String updatedAt) {
@@ -97,7 +100,22 @@ public class CartServiceImpl implements CartService {
                     cp.setCart(cart);
                     if (cp.getCreatedAt() == null) cp.setCreatedAt(now);
                     // cp.setUpdatedAt(now);
-                    BigDecimal price = cp.getPrice() != null ? cp.getPrice() : BigDecimal.ZERO;
+                    UUID pid = (cp.getProduct() != null) ? cp.getProduct().getId() : null;
+                    Product product = null;
+                    if (pid != null) {
+                        try {
+                            product = productRepository.getById(pid);
+                        } catch (Exception e) {
+                            log.warn("Producto no encontrado para id: {}", pid);
+                        }
+                    }
+                    if (product != null) {
+                        cp.setProduct(product);
+                    }
+                    BigDecimal priceFromDb = (product != null && product.getPrice() != null) ? product.getPrice() : null;
+                    BigDecimal fallbackPrice = cp.getPrice() != null ? cp.getPrice() : BigDecimal.ZERO;
+                    BigDecimal price = priceFromDb != null ? priceFromDb : fallbackPrice;
+                    cp.setPrice(price);
                     int qty = cp.getQuantity() != null ? cp.getQuantity() : 0;
                     BigDecimal subtotal = price.multiply(BigDecimal.valueOf(qty));
                     cp.setSubtotal(subtotal);
@@ -128,7 +146,6 @@ public class CartServiceImpl implements CartService {
                 LocalDateTime now = LocalDateTime.now();
                 BigDecimal total = BigDecimal.ZERO;
                 if (patched.getCartProducts() != null) {
-                    // Index existing by productId
                     Map<UUID, CartProduct> existingByProduct = new HashMap<>();
                     if (cart.getCartProducts() != null) {
                         for (var existing : cart.getCartProducts()) {
@@ -138,7 +155,6 @@ public class CartServiceImpl implements CartService {
                         }
                     }
 
-                    // Track incoming product ids to support deletions
                     Set<UUID> incomingProductIds = new HashSet<>();
 
                     List<CartProduct> merged = new ArrayList<>();
@@ -146,31 +162,41 @@ public class CartServiceImpl implements CartService {
                         UUID pid = (incoming.getProduct() != null) ? incoming.getProduct().getId() : null;
                         if (pid == null) { continue; }
                         incomingProductIds.add(pid);
+
+                        // Resolver producto y precio desde DB
+                        Product product = null;
+                        try {
+                            product = productRepository.getById(pid);
+                        } catch (Exception e) {
+                            log.warn("Producto no encontrado para id: {}", pid);
+                        }
+                        BigDecimal priceFromDb = (product != null && product.getPrice() != null) ? product.getPrice() : null;
+                        BigDecimal fallbackPrice = incoming.getPrice() != null ? incoming.getPrice() : BigDecimal.ZERO;
+                        BigDecimal price = priceFromDb != null ? priceFromDb : fallbackPrice;
+                        Integer qty = incoming.getQuantity() != null ? incoming.getQuantity() : 0;
+                        BigDecimal subtotal = price.multiply(BigDecimal.valueOf(qty));
+
                         CartProduct toUse = existingByProduct.get(pid);
                         if (toUse != null) {
                             // update existing
-                            Integer qty = incoming.getQuantity() != null ? incoming.getQuantity() : 0;
-                            BigDecimal price = incoming.getPrice() != null ? incoming.getPrice() : BigDecimal.ZERO;
-                            BigDecimal subtotal = price.multiply(BigDecimal.valueOf(qty));
+                            if (product != null) toUse.setProduct(product);
                             toUse.setQuantity(qty);
                             toUse.setPrice(price);
                             toUse.setSubtotal(subtotal);
                             toUse.setUpdatedAt(now);
                             toUse.setCart(patched);
                             merged.add(toUse);
-                            total = total.add(subtotal);
                         } else {
                             // new item
-                            Integer qty = incoming.getQuantity() != null ? incoming.getQuantity() : 0;
-                            BigDecimal price = incoming.getPrice() != null ? incoming.getPrice() : BigDecimal.ZERO;
-                            BigDecimal subtotal = price.multiply(BigDecimal.valueOf(qty));
                             incoming.setCart(patched);
+                            if (product != null) incoming.setProduct(product);
                             if (incoming.getCreatedAt() == null) incoming.setCreatedAt(now);
                             incoming.setUpdatedAt(now);
+                            incoming.setPrice(price);
                             incoming.setSubtotal(subtotal);
                             merged.add(incoming);
-                            total = total.add(subtotal);
                         }
+                        total = total.add(subtotal);
                     }
                     // Items not present in incoming will be removed by orphanRemoval when we set the merged list
                     patched.setCartProducts(merged);
@@ -235,13 +261,24 @@ public class CartServiceImpl implements CartService {
                 if (pid == null) continue;
                 incomingIds.add(pid);
 
+                // Resolver producto y precio desde DB
+                Product product = null;
+                try {
+                    product = productRepository.getById(pid);
+                } catch (Exception e) {
+                    log.warn("Producto no encontrado para id: {}", pid);
+                }
+                BigDecimal priceFromDb = (product != null && product.getPrice() != null) ? product.getPrice() : null;
+                BigDecimal fallbackPrice = incoming.getPrice() != null ? incoming.getPrice() : BigDecimal.ZERO;
+                BigDecimal price = priceFromDb != null ? priceFromDb : fallbackPrice;
+
                 Integer qty = incoming.getQuantity() != null ? incoming.getQuantity() : 0;
-                BigDecimal price = incoming.getPrice() != null ? incoming.getPrice() : BigDecimal.ZERO;
                 BigDecimal subtotal = price.multiply(BigDecimal.valueOf(qty));
 
                 CartProduct existing = existingByProduct.get(pid);
                 if (existing != null) {
                     // Actualizar registro existente
+                    if (product != null) existing.setProduct(product);
                     existing.setQuantity(qty);
                     existing.setPrice(price);
                     existing.setSubtotal(subtotal);
@@ -251,7 +288,11 @@ public class CartServiceImpl implements CartService {
                     // Crear registro nuevo
                     CartProduct newItem = new CartProduct();
                     newItem.setCart(cart);
-                    newItem.setProduct(incoming.getProduct()); // asume product con id válido
+                    if (product != null) {
+                        newItem.setProduct(product);
+                    } else {
+                        newItem.setProduct(incoming.getProduct()); // fallback
+                    }
                     newItem.setQuantity(qty);
                     newItem.setPrice(price);
                     newItem.setSubtotal(subtotal);
