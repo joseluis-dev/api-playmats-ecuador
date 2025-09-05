@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.playmatsec.app.controller.model.ProductDTO;
 
@@ -55,7 +54,7 @@ public class Product {
     )
     private List<Attribute> attributes;
     @OneToMany(mappedBy = "product")
-    @JsonManagedReference("product-cartProducts")
+    @JsonIgnore
     private List<CartProduct> cartProducts;
 
     @OneToMany(mappedBy = "product")

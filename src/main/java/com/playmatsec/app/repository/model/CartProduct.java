@@ -38,7 +38,6 @@ public class CartProduct {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id")
-    @JsonBackReference("product-cartProducts")
     private Product product;
 
     private Integer quantity;
