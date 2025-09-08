@@ -26,9 +26,12 @@ import com.playmatsec.app.repository.model.Payment;
 import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.model.ShippingAddress;
 import com.playmatsec.app.repository.model.User;
+import com.playmatsec.app.repository.utils.Consts.PaymentMethod;
+import com.playmatsec.app.repository.utils.Consts.PaymentStatus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -99,8 +102,15 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public Order createOrder(OrderDTO request) {
         if (request != null && request.getUser() != null) {
+            // Validar que exista al menos un pago antes de crear la orden (regla de negocio)
+            if (request.getPayments() == null || request.getPayments().isEmpty()) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.FORBIDDEN,
+                        "Operación no permitida: la orden debe tener al menos un pago");
+            }
             Order order = objectMapper.convertValue(request, Order.class);
             if (request.getUser().getId() != null) {
                 User user = userRespository.getById(request.getUser().getId());
@@ -137,8 +147,61 @@ public class OrderServiceImpl implements OrderService {
                     }
                 }
             }
+            // Calcular totalAmount a partir de los OrderProducts (fuente de verdad) si existen
+            if (order.getOrderProducts() != null && !order.getOrderProducts().isEmpty()) {
+                BigDecimal total = order.getOrderProducts().stream()
+                        .map(OrderProduct::getSubtotal)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                order.setTotalAmount(total);
+            }
+
+            // Persistimos la orden primero (sin pagos) para garantizar que exista el registro antes de referenciarlo desde Payment
             order.setCreatedAt(LocalDateTime.now());
-            return orderRepository.save(order);
+            order = orderRepository.save(order);
+
+            // Manejar pagos tras haber persistido la orden
+            List<Payment> persistedPayments = new ArrayList<>();
+            for (Payment paymentReq : request.getPayments()) {
+                Payment paymentEntity;
+                if (paymentReq.getId() != null) {
+                    paymentEntity = paymentRepository.getById(paymentReq.getId());
+                    if (paymentEntity == null) {
+                        throw new IllegalArgumentException("Payment no encontrado: " + paymentReq.getId());
+                    }
+                    paymentEntity.setOrder(order);
+                } else {
+                    paymentEntity = new Payment();
+                    paymentEntity.setId(UUID.randomUUID());
+                    paymentEntity.setOrder(order);
+                    paymentEntity.setAmount(paymentReq.getAmount());
+                    paymentEntity.setProviderPaymentId(paymentReq.getProviderPaymentId());
+                    paymentEntity.setMethod(paymentReq.getMethod());
+                    paymentEntity.setStatus(paymentReq.getStatus() != null ? paymentReq.getStatus() : PaymentStatus.PENDING);
+                    paymentEntity.setImageUrl(paymentReq.getImageUrl());
+                    paymentEntity.setPaidAt(paymentReq.getPaidAt());
+                    paymentEntity.setCreatedAt(LocalDateTime.now());
+                }
+                if (paymentEntity.getMethod() != PaymentMethod.CASH) {
+                    if (paymentEntity.getAmount() == null || paymentEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new IllegalArgumentException("El monto del pago debe ser > 0 para métodos no CASH");
+                    }
+                }
+                paymentEntity = paymentRepository.save(paymentEntity);
+                persistedPayments.add(paymentEntity);
+            }
+            order.setPayments(persistedPayments);
+
+            boolean hasCash = persistedPayments.stream().anyMatch(p -> p.getMethod() == PaymentMethod.CASH);
+            if (!hasCash && order.getTotalAmount() != null) {
+                BigDecimal sumaPagos = persistedPayments.stream()
+                        .map(Payment::getAmount)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                if (sumaPagos.compareTo(order.getTotalAmount()) != 0) {
+                    throw new IllegalArgumentException("La suma de los pagos (" + sumaPagos + ") difiere del total de la orden (" + order.getTotalAmount() + ")");
+                }
+            }
+            // Devolver orden con pagos; no es necesario re-guardar porque Payment es el dueño de la relación
+            return order;
         }
         return null;
     }
