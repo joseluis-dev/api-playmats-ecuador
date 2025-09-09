@@ -25,6 +25,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final ObjectMapper objectMapper;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     public List<Payment> getPayments(String order, String amount, String providerPaymentId, String method, String status, String imageUrl, String paidAt, String createdAt) {
@@ -108,12 +109,48 @@ public class PaymentServiceImpl implements PaymentService {
             UUID paymentId = UUID.fromString(id);
             Payment payment = paymentRepository.getById(paymentId);
             if (payment != null) {
-                paymentRepository.delete(payment);
+                // Si existe imagen, intentar eliminar primero en Cloudinary
+                String imageUrl = payment.getImageUrl();
+                if (StringUtils.hasLength(imageUrl)) {
+                    String publicId = extractPublicId(imageUrl);
+                    if (publicId != null) {
+                        boolean deleted = cloudinaryService.deleteImage(publicId);
+                        if (!deleted) {
+                            log.warn("No se pudo eliminar la imagen en Cloudinary (publicId={}), se aborta borrado de payment {}", publicId, id);
+                            return false; // evitar eliminar registro si la imagen no se pudo borrar
+                        }
+                    } else {
+                        log.warn("No se pudo derivar publicId desde imageUrl={}, continuando con borrado de payment", imageUrl);
+                    }
+                }
+                paymentRepository.delete(payment); // eliminar registro tras eliminar imagen (o si no había)
                 return true;
             }
         } catch (IllegalArgumentException e) {
             log.error("Invalid payment ID format: {}", id, e);
         }
         return false;
+    }
+
+    private String extractPublicId(String url) {
+        if (!StringUtils.hasLength(url)) return null;
+        try {
+            int uploadIdx = url.indexOf("/upload/");
+            if (uploadIdx == -1) return null;
+            String rest = url.substring(uploadIdx + 8); // después de /upload/
+            // Remover versión (v123456789/)
+            if (rest.startsWith("v")) {
+                int slash = rest.indexOf('/');
+                if (slash != -1) rest = rest.substring(slash + 1);
+            }
+            int qIdx = rest.indexOf('?');
+            if (qIdx != -1) rest = rest.substring(0, qIdx);
+            int dotIdx = rest.lastIndexOf('.');
+            if (dotIdx != -1) rest = rest.substring(0, dotIdx);
+            return rest;
+        } catch (Exception ex) {
+            log.warn("Error extrayendo publicId de url {}: {}", url, ex.getMessage());
+            return null;
+        }
     }
 }

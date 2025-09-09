@@ -32,6 +32,7 @@ import com.playmatsec.app.repository.utils.Consts.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final OrderProductRepository orderProductRepository;
     private final ObjectMapper objectMapper;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     public List<Order> getOrders(String user, String createdAt, String updatedAt, String status, String totalAmount, String shippingAddress, String billingAddress, String payment) {
@@ -83,10 +85,26 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderProduct> getOrderProductsByOrderId(String orderId) {
-        if (orderId != null) {
-            return orderProductRepository.search(orderId, null, null, null, null, null);
+        if (orderId == null) {
+            return List.of();
         }
-        return List.of();
+        List<OrderProduct> orderProducts = orderProductRepository.search(orderId, null, null, null, null, null);
+        if (orderProducts == null || orderProducts.isEmpty()) {
+            return List.of();
+        }
+        for (OrderProduct op : orderProducts) {
+            try {
+                if (op != null && op.getProduct() != null && op.getProduct().getId() != null) {
+                    Product fullProduct = productRepository.getById(op.getProduct().getId());
+                    if (fullProduct != null) {
+                        op.setProduct(fullProduct);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("No se pudo cargar el detalle del producto para OrderProduct en orden {}", orderId, e);
+            }
+        }
+        return orderProducts;
     }
 
     @Override
@@ -161,7 +179,7 @@ public class OrderServiceImpl implements OrderService {
 
             // Manejar pagos tras haber persistido la orden
             List<Payment> persistedPayments = new ArrayList<>();
-            for (Payment paymentReq : request.getPayments()) {
+        for (Payment paymentReq : request.getPayments()) {
                 Payment paymentEntity;
                 if (paymentReq.getId() != null) {
                     paymentEntity = paymentRepository.getById(paymentReq.getId());
@@ -177,7 +195,7 @@ public class OrderServiceImpl implements OrderService {
                     paymentEntity.setProviderPaymentId(paymentReq.getProviderPaymentId());
                     paymentEntity.setMethod(paymentReq.getMethod());
                     paymentEntity.setStatus(paymentReq.getStatus() != null ? paymentReq.getStatus() : PaymentStatus.PENDING);
-                    paymentEntity.setImageUrl(paymentReq.getImageUrl());
+            // La imageUrl se definirá tras subir el archivo si se provee
                     paymentEntity.setPaidAt(paymentReq.getPaidAt());
                     paymentEntity.setCreatedAt(LocalDateTime.now());
                 }
@@ -204,6 +222,48 @@ public class OrderServiceImpl implements OrderService {
             return order;
         }
         return null;
+    }
+
+    // Sobrecarga para aceptar archivo de comprobante de pago (solo 1 imagen por ahora)
+    @Transactional
+    public Order createOrder(OrderDTO request, MultipartFile paymentImage) {
+        // Validar existencia de la imagen ANTES de crear la orden para que no se persista sin comprobante
+        if (paymentImage == null || paymentImage.isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.BAD_REQUEST,
+                "La imagen del comprobante de pago (paymentImage) es obligatoria"
+            );
+        }
+
+        Order order = createOrder(request); // crea y persiste orden + pagos (sin imageUrl)
+        if (order == null) return null; // fallback seguro
+
+        try {
+            String folder = "payments/" + order.getId();
+            var uploadResult = cloudinaryService.uploadImage(paymentImage, folder);
+            if (uploadResult == null || uploadResult.get("url") == null) {
+                throw new IllegalStateException("No se pudo obtener URL de la imagen subida a Cloudinary");
+            }
+            // Asignar la URL al primer pago sin imageUrl
+            for (Payment p : order.getPayments()) {
+                if (p.getImageUrl() == null) {
+                    p.setImageUrl(uploadResult.get("url"));
+                    paymentRepository.save(p);
+                    break;
+                }
+            }
+        } catch (RuntimeException ex) {
+            // Re-lanzar para provocar rollback de la transacción (orden y pagos)
+            log.error("Fallo al subir la imagen del pago. Se revierte la creación de la orden {}", order.getId(), ex);
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Error inesperado al subir la imagen del pago. Se revierte la creación de la orden {}", order.getId(), ex);
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR,
+                "Error subiendo la imagen del pago"
+            );
+        }
+        return order;
     }
 
     @Override
@@ -286,6 +346,25 @@ public class OrderServiceImpl implements OrderService {
                     }
                     patched.setOrderProducts(updatedOrderProducts);
                 }
+                // Recalcular el totalAmount a partir de los subtotales de los OrderProducts
+                if (patched.getOrderProducts() != null && !patched.getOrderProducts().isEmpty()) {
+                    BigDecimal total = patched.getOrderProducts().stream()
+                            .map(op -> {
+                                BigDecimal sub = op.getSubtotal();
+                                if (sub == null) {
+                                    // Fallback en caso de que no venga calculado el subtotal
+                                    BigDecimal unit = op.getUnitPrice() != null ? op.getUnitPrice() : BigDecimal.ZERO;
+                                    return unit.multiply(BigDecimal.valueOf(op.getQuantity()));
+                                }
+                                return sub;
+                            })
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    patched.setTotalAmount(total);
+                } else {
+                    // Si no hay productos en la orden, el total debe ser 0
+                    patched.setTotalAmount(BigDecimal.ZERO);
+                }
+
                 patched.setUpdatedAt(LocalDateTime.now());
                 orderRepository.save(patched);
                 return patched;
@@ -298,9 +377,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public Order updateOrder(String id, OrderDTO request) {
         Order order = getOrderById(id);
         if (order != null) {
+            // Actualizar campos generales mediante el método update existente (estatus, direcciones simples, etc.)
+            order.update(request);
+
+            // Resolver referencias de user y shippingAddress a entidades administradas
             if (request.getUser() != null && request.getUser().getId() != null) {
                 User user = userRespository.getById(request.getUser().getId());
                 order.setUser(user);
@@ -309,21 +393,115 @@ public class OrderServiceImpl implements OrderService {
                 ShippingAddress shippingAddress = shippingAddressRepository.getById(request.getShippingAddress().getId());
                 order.setShippingAddress(shippingAddress);
             }
-            if (request.getPayments() != null && !request.getPayments().isEmpty()) {
-                List<Payment> updatedPayments = new ArrayList<>();
-                for (Payment pDTO : request.getPayments()) {
-                    if (pDTO.getId() == null) {
-                        throw new IllegalArgumentException("Cada payment debe incluir id");
+
+            // Actualización de OrderProducts (precio y subtotal desde Product como fuente de verdad)
+            if (request.getOrderProducts() != null) {
+                List<OrderProduct> updatedOrderProducts = new ArrayList<>();
+                for (OrderProduct opDTO : request.getOrderProducts()) {
+                    if (opDTO.getProduct() == null || opDTO.getProduct().getId() == null) {
+                        throw new IllegalArgumentException("Cada orderProduct debe incluir product.id");
                     }
-                    Payment payment = paymentRepository.getById(pDTO.getId());
-                    if (payment == null) {
-                        throw new IllegalArgumentException("Payment no encontrado: " + pDTO.getId());
+                    Product product = productRepository.getById(opDTO.getProduct().getId());
+                    if (product == null) {
+                        throw new IllegalArgumentException("Producto no encontrado: " + opDTO.getProduct().getId());
                     }
-                    updatedPayments.add(payment);
+                    // Intentar reutilizar el OrderProduct existente para ese producto
+                    OrderProduct existing = null;
+                    if (order.getOrderProducts() != null) {
+                        for (OrderProduct op : order.getOrderProducts()) {
+                            if (op.getProduct() != null && op.getProduct().getId().equals(product.getId())) {
+                                existing = op;
+                                break;
+                            }
+                        }
+                    }
+                    if (existing != null) {
+                        existing.setQuantity(opDTO.getQuantity());
+                        existing.setUnitPrice(product.getPrice());
+                        existing.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(opDTO.getQuantity())));
+                        existing.setUpdatedAt(LocalDateTime.now());
+                        updatedOrderProducts.add(existing);
+                    } else {
+                        OrderProduct newOp = new OrderProduct();
+                        newOp.setProduct(product);
+                        newOp.setOrder(order);
+                        newOp.setQuantity(opDTO.getQuantity());
+                        newOp.setUnitPrice(product.getPrice());
+                        newOp.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(opDTO.getQuantity())));
+                        newOp.setCreatedAt(LocalDateTime.now());
+                        updatedOrderProducts.add(newOp);
+                    }
                 }
-                order.setPayments(updatedPayments);
+                order.setOrderProducts(updatedOrderProducts);
+
+                // Recalcular totalAmount desde los subtotales de OrderProducts
+                BigDecimal total = updatedOrderProducts.stream()
+                        .map(op -> {
+                            BigDecimal sub = op.getSubtotal();
+                            if (sub == null) {
+                                BigDecimal unit = op.getUnitPrice() != null ? op.getUnitPrice() : BigDecimal.ZERO;
+                                return unit.multiply(BigDecimal.valueOf(op.getQuantity()));
+                            }
+                            return sub;
+                        })
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                order.setTotalAmount(total);
             }
-            order.update(request);
+
+            // Actualizar/crear pagos según reglas de negocio
+            if (request.getPayments() != null && !request.getPayments().isEmpty()) {
+                List<Payment> persistedPayments = new ArrayList<>();
+                for (Payment pDTO : request.getPayments()) {
+                    Payment paymentEntity;
+                    if (pDTO.getId() != null) {
+                        paymentEntity = paymentRepository.getById(pDTO.getId());
+                        if (paymentEntity == null) {
+                            throw new IllegalArgumentException("Payment no encontrado: " + pDTO.getId());
+                        }
+                        // Actualizar campos permitidos
+                        if (pDTO.getAmount() != null) paymentEntity.setAmount(pDTO.getAmount());
+                        if (pDTO.getProviderPaymentId() != null) paymentEntity.setProviderPaymentId(pDTO.getProviderPaymentId());
+                        if (pDTO.getMethod() != null) paymentEntity.setMethod(pDTO.getMethod());
+                        if (pDTO.getStatus() != null) paymentEntity.setStatus(pDTO.getStatus());
+                        if (pDTO.getPaidAt() != null) paymentEntity.setPaidAt(pDTO.getPaidAt());
+                    } else {
+                        paymentEntity = new Payment();
+                        paymentEntity.setId(UUID.randomUUID());
+                        paymentEntity.setAmount(pDTO.getAmount());
+                        paymentEntity.setProviderPaymentId(pDTO.getProviderPaymentId());
+                        paymentEntity.setMethod(pDTO.getMethod());
+                        paymentEntity.setStatus(pDTO.getStatus() != null ? pDTO.getStatus() : PaymentStatus.PENDING);
+                        paymentEntity.setPaidAt(pDTO.getPaidAt());
+                        paymentEntity.setCreatedAt(LocalDateTime.now());
+                    }
+                    paymentEntity.setOrder(order);
+
+                    if (paymentEntity.getMethod() != PaymentMethod.CASH) {
+                        if (paymentEntity.getAmount() == null || paymentEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+                            throw new IllegalArgumentException("El monto del pago debe ser > 0 para métodos no CASH");
+                        }
+                    }
+
+                    paymentEntity = paymentRepository.save(paymentEntity);
+                    persistedPayments.add(paymentEntity);
+                }
+
+                order.setPayments(persistedPayments);
+
+                // Validación de suma de pagos vs total cuando no hay CASH
+                boolean hasCash = persistedPayments.stream().anyMatch(p -> p.getMethod() == PaymentMethod.CASH);
+                if (!hasCash && order.getTotalAmount() != null) {
+                    BigDecimal sumaPagos = persistedPayments.stream()
+                            .map(Payment::getAmount)
+                            .filter(a -> a != null)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    if (sumaPagos.compareTo(order.getTotalAmount()) != 0) {
+                        throw new IllegalArgumentException("La suma de los pagos (" + sumaPagos + ") difiere del total de la orden (" + order.getTotalAmount() + ")");
+                    }
+                }
+            }
+
+            order.setUpdatedAt(LocalDateTime.now());
             orderRepository.save(order);
             return order;
         }
@@ -336,6 +514,10 @@ public class OrderServiceImpl implements OrderService {
             UUID orderId = UUID.fromString(id);
             Order order = orderRepository.getById(orderId);
             if (order != null) {
+                if (order.getPayments() != null && !order.getPayments().isEmpty()) {
+                    log.warn("No se puede eliminar la orden {} porque tiene pagos asociados ({})", id, order.getPayments().size());
+                    return false;
+                }
                 orderRepository.delete(order);
                 return true;
             }

@@ -57,6 +57,13 @@ public class CartController {
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
+  @DeleteMapping("/carts")
+  public ResponseEntity<Boolean> clearCartByUser(@RequestHeader Map<String, String> headers, @RequestParam String user) {
+    log.info("headers: {}", headers);
+    boolean cleared = cartService.clearCartByUser(user);
+    return cleared ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
+  }
+
   @PostMapping("/carts")
   public ResponseEntity<Cart> createCart(@RequestHeader Map<String, String> headers, @RequestBody CartDTO cart) {
     log.info("headers: {}", headers);

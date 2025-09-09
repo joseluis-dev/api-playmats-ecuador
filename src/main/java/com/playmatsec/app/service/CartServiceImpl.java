@@ -336,4 +336,28 @@ public class CartServiceImpl implements CartService {
         }
         return false;
     }
+
+    @Override
+    public Boolean clearCartByUser(String userId) {
+        if (!StringUtils.hasLength(userId)) return false;
+        try {
+            // Buscar carts del usuario
+            List<Cart> carts = cartRepository.search(userId, null, null, null);
+            if (carts == null || carts.isEmpty()) return false;
+            boolean changed = false;
+            for (Cart cart : carts) {
+                if (cart.getCartProducts() != null && !cart.getCartProducts().isEmpty()) {
+                    cart.getCartProducts().clear(); // orphanRemoval debe limpiar en DB
+                    cart.setTotal(BigDecimal.ZERO);
+                    cart.setUpdatedAt(LocalDateTime.now());
+                    cartRepository.save(cart);
+                    changed = true;
+                }
+            }
+            return changed;
+        } catch (Exception e) {
+            log.error("Error clearing carts for user {}", userId, e);
+            return false;
+        }
+    }
 }

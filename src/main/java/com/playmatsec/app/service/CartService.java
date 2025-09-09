@@ -12,4 +12,5 @@ public interface CartService {
     Cart updateCart(String id, String updateRequest);
     Cart updateCart(String id, CartDTO cart);
     Boolean deleteCart(String id);
+    Boolean clearCartByUser(String userId);
 }
