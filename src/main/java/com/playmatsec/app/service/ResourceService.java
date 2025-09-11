@@ -11,7 +11,7 @@ import com.playmatsec.app.repository.model.Attribute;
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
 
 public interface ResourceService {
-    List<Resource> getResources(String name, String url, String hosting, String thumbnail, String watermark, String type, Boolean isBanner, String product);
+    List<Resource> getResources(String name, String url, String hosting, String thumbnail, String watermark, String type, Boolean isBanner, String product, String category);
     Resource getResourceById(String id);
     Resource createResource(MultipartFile file, ResourceUploadDTO uploadDTO);
     Resource updateResource(String id, String updateRequest);

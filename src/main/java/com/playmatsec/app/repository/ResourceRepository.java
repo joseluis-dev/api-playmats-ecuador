@@ -34,8 +34,18 @@ public class ResourceRepository {
         repository.delete(resource);
     }
 
-    public List<Resource> search(String name, String url, String hosting, String thumbnail, String watermark, String type, Boolean isBanner, String product) {
+    public List<Resource> search(String name,
+                                String url,
+                                String hosting,
+                                String thumbnail,
+                                String watermark,
+                                String type,
+                                Boolean isBanner,
+                                String product,
+                                String category) {
+
         ResourceSearchCriteria spec = new ResourceSearchCriteria();
+
         if (StringUtils.isNotBlank(name)) {
             spec.add(new SearchStatement(ResourceConsts.NAME, name, SearchOperation.MATCH));
         }
@@ -54,11 +64,21 @@ public class ResourceRepository {
         if (StringUtils.isNotBlank(type)) {
             spec.add(new SearchStatement(ResourceConsts.TYPE, type, SearchOperation.EQUAL));
         }
+        // isBanner pertenece a ResourceProduct
         if (isBanner != null) {
-            spec.add(new SearchStatement(ResourceConsts.IS_BANNER, isBanner, SearchOperation.EQUAL));
+            spec.add(new SearchStatement(ResourceConsts.RESOURCE_PRODUCTS_IS_BANNER, isBanner, SearchOperation.EQUAL));
         }
+        // product: UUID vía resourceProducts.product.id
         if (StringUtils.isNotBlank(product)) {
-            spec.add(new SearchStatement(ResourceConsts.PRODUCT + ".id", UUID.fromString(product), SearchOperation.EQUAL));
+            spec.add(new SearchStatement(ResourceConsts.RESOURCE_PRODUCTS_PRODUCT_ID, UUID.fromString(product), SearchOperation.EQUAL));
+        }
+        // category: Integer vía categories.id
+        if (StringUtils.isNotBlank(category)) {
+            try {
+                spec.add(new SearchStatement(ResourceConsts.CATEGORIES_ID, Integer.valueOf(category), SearchOperation.EQUAL));
+            } catch (NumberFormatException ex) {
+                // Silencioso: id inválido, no agrega criterio
+            }
         }
         return repository.findAll(spec);
     }

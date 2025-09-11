@@ -39,9 +39,9 @@ public class ResourceServiceImpl implements ResourceService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<Resource> getResources(String name, String url, String hosting, String thumbnail, String watermark, String type, Boolean isBanner, String product) {
-        if (StringUtils.hasLength(name) || StringUtils.hasLength(url) || StringUtils.hasLength(hosting) || StringUtils.hasLength(thumbnail) || StringUtils.hasLength(watermark) || StringUtils.hasLength(type) || isBanner != null || StringUtils.hasLength(product)) {
-            return resourceRepository.search(name, url, hosting, thumbnail, watermark, type, isBanner, product);
+    public List<Resource> getResources(String name, String url, String hosting, String thumbnail, String watermark, String type, Boolean isBanner, String product, String category) {
+        if (StringUtils.hasLength(name) || StringUtils.hasLength(url) || StringUtils.hasLength(hosting) || StringUtils.hasLength(thumbnail) || StringUtils.hasLength(watermark) || StringUtils.hasLength(type) || isBanner != null || StringUtils.hasLength(product) || StringUtils.hasLength(category)) {
+            return resourceRepository.search(name, url, hosting, thumbnail, watermark, type, isBanner, product, category);
         }
         List<Resource> resources = resourceRepository.getResources();
         return resources.isEmpty() ? null : resources;

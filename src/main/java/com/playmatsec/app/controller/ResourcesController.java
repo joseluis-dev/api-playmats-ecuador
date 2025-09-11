@@ -44,10 +44,11 @@ public class ResourcesController {
       @RequestParam(required = false) String hosting,
       @RequestParam(required = false) String type,
       @RequestParam(required = false) Boolean isBanner,
-      @RequestParam(required = false) String product) {
+      @RequestParam(required = false) String product,
+      @RequestParam(required = false) String category){
     log.info("headers: {}", headers);
     List<Resource> resources = resourceService.getResources(name, url, hosting, thumbnail, watermark, type, isBanner,
-        product);
+        product, category);
     return resources != null ? ResponseEntity.ok(resources) : ResponseEntity.ok(Collections.emptyList());
   }
 
