@@ -9,4 +9,6 @@ public enum SearchOperation {
     EQUAL,
     MATCH,
     MATCH_END,
+    IN,
+    IN_ALL,
 }

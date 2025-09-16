@@ -34,6 +34,12 @@ import lombok.extern.slf4j.Slf4j;
 public class ResourcesController {
   private final ResourceService resourceService;
 
+  /**
+   * Lista recursos con filtros opcionales.
+   * Para múltiples categorías use:
+   * - Repetir parámetro: ?category=1&category=2
+   * - O separado por comas: ?category=1,2,3
+   */
   @GetMapping("/resources")
   public ResponseEntity<List<Resource>> getResources(
       @RequestHeader Map<String, String> headers,
@@ -45,10 +51,11 @@ public class ResourcesController {
       @RequestParam(required = false) String type,
       @RequestParam(required = false) Boolean isBanner,
       @RequestParam(required = false) String product,
-      @RequestParam(required = false) String category){
+      @RequestParam(name = "category", required = false) List<String> categories){
     log.info("headers: {}", headers);
+    // Soporta múltiples categorías: ?category=1&category=2 o ?category=1,2,3
     List<Resource> resources = resourceService.getResources(name, url, hosting, thumbnail, watermark, type, isBanner,
-        product, category);
+        product, categories);
     return resources != null ? ResponseEntity.ok(resources) : ResponseEntity.ok(Collections.emptyList());
   }
 

@@ -42,7 +42,7 @@ public class ResourceRepository {
                                 String type,
                                 Boolean isBanner,
                                 String product,
-                                String category) {
+                                List<String> categories) {
 
         ResourceSearchCriteria spec = new ResourceSearchCriteria();
 
@@ -72,12 +72,26 @@ public class ResourceRepository {
         if (StringUtils.isNotBlank(product)) {
             spec.add(new SearchStatement(ResourceConsts.RESOURCE_PRODUCTS_PRODUCT_ID, UUID.fromString(product), SearchOperation.EQUAL));
         }
-        // category: Integer vía categories.id
-        if (StringUtils.isNotBlank(category)) {
-            try {
-                spec.add(new SearchStatement(ResourceConsts.CATEGORIES_ID, Integer.valueOf(category), SearchOperation.EQUAL));
-            } catch (NumberFormatException ex) {
-                // Silencioso: id inválido, no agrega criterio
+        // categories: lista de Integer vía categories.id (OR semantics)
+        if (categories != null && !categories.isEmpty()) {
+            // soportar "1,2,3" en un único valor
+            List<Integer> categoryIds = new java.util.ArrayList<>();
+            for (String c : categories) {
+                if (c == null || c.isBlank()) continue;
+                String[] parts = c.split(",");
+                for (String p : parts) {
+                    String trimmed = p.trim();
+                    if (!trimmed.isEmpty()) {
+                        try {
+                            categoryIds.add(Integer.valueOf(trimmed));
+                        } catch (NumberFormatException ex) {
+                            // ignorar valores inválidos
+                        }
+                    }
+                }
+            }
+            if (!categoryIds.isEmpty()) {
+                spec.add(new SearchStatement(ResourceConsts.CATEGORIES_ID, categoryIds, SearchOperation.IN_ALL));
             }
         }
         return repository.findAll(spec);

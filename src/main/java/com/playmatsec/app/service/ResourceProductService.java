@@ -1,7 +1,6 @@
 package com.playmatsec.app.service;
 
 import java.util.List;
-import java.util.UUID;
 
 import com.playmatsec.app.repository.model.ResourceProduct;
 import com.playmatsec.app.controller.model.ResourceProductDTO;
