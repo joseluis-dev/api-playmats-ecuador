@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.ArrayList;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -289,6 +290,56 @@ public class ProductServiceImpl implements ProductService {
         return null;
     }
 
+    @Override
+    public Product.ResourceWithBanner addResourceToProductAndReturnResource(String productId, MultipartFile file, ResourceUploadDTO uploadDTO) {
+        try {
+            Product product = getProductById(productId);
+            if (product != null && file != null && !file.isEmpty()) {
+                // Determinar el tipo automáticamente si no viene
+                ResourceType detectedType = determineResourceType(file);
+
+                String folder = "products/";
+                Map<String, String> uploadResult = cloudinaryService.uploadImage(file, folder);
+
+                if (uploadResult != null) {
+                    String resourceName = uploadDTO.getName();
+                    if (resourceName == null || resourceName.isEmpty()) {
+                        resourceName = file.getOriginalFilename();
+                    }
+
+                    Resource resource = new Resource();
+                    resource.setName(resourceName);
+                    resource.setUrl(uploadResult.get("url"));
+                    resource.setThumbnail(uploadResult.get("thumbnail"));
+                    resource.setWatermark(uploadResult.get("watermark"));
+                    resource.setHosting("cloudinary");
+                    resource.setType(detectedType);
+                    resource.setPublicId(uploadResult.get("publicId"));
+
+                    Resource savedResource = resourceRepository.save(resource);
+                    log.info("*** Resource saved with ID: {}", savedResource.getId());
+                    ResourceProductDTO resourceProductDTO = new ResourceProductDTO();
+                    resourceProductDTO.setResourceId(savedResource.getId().toString());
+                    resourceProductDTO.setProductId(productId);
+                    resourceProductDTO.setIsBanner(uploadDTO.getIsBanner());
+
+                    resourceProductService.createResourceProduct(resourceProductDTO);
+
+                    product.setUpdatedAt(LocalDateTime.now());
+                    productRepository.save(product);
+
+                    Product.ResourceWithBanner response = new Product.ResourceWithBanner();
+                    response.setResource(savedResource);
+                    response.setIsBanner(Boolean.TRUE.equals(uploadDTO.getIsBanner()));
+                    return response;
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error adding resource to product (return resource)", e);
+        }
+        return null;
+    }
+
     /**
      * Determina automáticamente el tipo de recurso basado en el contenido del
      * archivo
@@ -421,6 +472,7 @@ public class ProductServiceImpl implements ProductService {
     }
     
     @Override
+    @Transactional
     public Boolean deleteResourceFromProduct(String productId, String resourceId) {
         try {
             // Validar que el producto exista
@@ -436,6 +488,18 @@ public class ProductServiceImpl implements ProductService {
             if (resource == null) {
                 log.warn("Recurso no encontrado con ID: {}", resourceId);
                 return false;
+            }
+
+            // Regla especial: si el recurso pertenece a la categoría "Sellos",
+            // solo se elimina la relación con el producto, sin borrar el recurso
+            boolean isSellosCategory = false;
+            try {
+                if (resource.getCategories() != null) {
+                    isSellosCategory = resource.getCategories().stream()
+                        .anyMatch(cat -> cat != null && cat.getName() != null && cat.getName().equalsIgnoreCase("Sellos"));
+                }
+            } catch (Exception e) {
+                log.warn("No se pudo evaluar categorías del recurso {} para la regla 'Sellos'", resourceId, e);
             }
             
             // Verificar si existe la relación entre producto y recurso
@@ -457,8 +521,9 @@ public class ProductServiceImpl implements ProductService {
                 return false;
             }
             
-            // Si el recurso solo está asociado a este producto, eliminarlo también
-            if (isOnlyAssociatedWithThisProduct) {
+            // Si NO es un recurso de la categoría "Sellos" y
+            // solo está asociado a este producto, eliminarlo también
+            if (!isSellosCategory && isOnlyAssociatedWithThisProduct) {
                 String publicId = resource.getPublicId();
                 
                 // Primero eliminar el registro de la base de datos
@@ -474,7 +539,11 @@ public class ProductServiceImpl implements ProductService {
                 
                 log.info("Recurso {} eliminado completamente (base de datos y Cloudinary) ya que solo estaba asociado al producto {}", resourceId, productId);
             } else {
-                log.info("Solo se eliminó la relación entre el producto {} y el recurso {} ya que el recurso está asociado a otros productos", productId, resourceId);
+                if (isSellosCategory) {
+                    log.info("Recurso {} pertenece a la categoría 'Sellos'. Se conserva el recurso y solo se elimina la relación con el producto {}", resourceId, productId);
+                } else {
+                    log.info("Solo se eliminó la relación entre el producto {} y el recurso {} ya que el recurso está asociado a otros productos", productId, resourceId);
+                }
             }
             
             // Actualizar la fecha de actualización del producto

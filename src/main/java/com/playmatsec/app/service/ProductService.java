@@ -29,6 +29,7 @@ public interface ProductService {
     // Resource management methods
     List<Product.ResourceWithBanner> getProductResources(String productId);
     Product addResourceToProduct(String productId, MultipartFile file, ResourceUploadDTO uploadDTO);
+    Product.ResourceWithBanner addResourceToProductAndReturnResource(String productId, MultipartFile file, ResourceUploadDTO uploadDTO);
     Product addResourcesToProduct(String productId, List<String> resourceIds);
     Product replaceProductResources(String productId, List<String> resourceIds);
     Boolean deleteResourceFromProduct(String productId, String resourceId);

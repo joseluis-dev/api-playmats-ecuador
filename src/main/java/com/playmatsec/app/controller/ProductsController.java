@@ -138,7 +138,7 @@ public class ProductsController {
   }
 
   @PostMapping("/products/{id}/resources")
-  public ResponseEntity<Product> addProductResource(
+  public ResponseEntity<Product.ResourceWithBanner> addProductResource(
     @RequestHeader Map<String, String> headers,
     @PathVariable String id,
     @RequestParam(value = "file", required = true) MultipartFile file,
@@ -149,8 +149,8 @@ public class ProductsController {
     ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
     uploadDTO.setType(type);
     uploadDTO.setIsBanner(isBanner);
-    Product updatedProduct = productService.addResourceToProduct(id, file, uploadDTO);
-    return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
+    Product.ResourceWithBanner created = productService.addResourceToProductAndReturnResource(id, file, uploadDTO);
+    return created != null ? ResponseEntity.status(201).body(created) : ResponseEntity.notFound().build();
   }
 
   @PostMapping("/products/{id}/resources/bulk")
