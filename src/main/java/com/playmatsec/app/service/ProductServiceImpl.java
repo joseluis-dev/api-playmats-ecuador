@@ -2,6 +2,8 @@ package com.playmatsec.app.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ import com.playmatsec.app.repository.ResourceRepository;
 import com.playmatsec.app.repository.model.Product;
 import com.playmatsec.app.repository.model.Resource;
 import com.playmatsec.app.repository.model.ResourceProduct;
+import com.playmatsec.app.repository.model.Product.ResourceWithBanner;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Attribute;
 import lombok.RequiredArgsConstructor;
@@ -328,7 +331,7 @@ public class ProductServiceImpl implements ProductService {
                     product.setUpdatedAt(LocalDateTime.now());
                     productRepository.save(product);
 
-                    Product.ResourceWithBanner response = new Product.ResourceWithBanner();
+                    ResourceWithBanner response = new ResourceWithBanner();
                     response.setResource(savedResource);
                     response.setIsBanner(Boolean.TRUE.equals(uploadDTO.getIsBanner()));
                     return response;
@@ -434,41 +437,94 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public Product replaceProductResources(String productId, List<String> resourceIds) {
         try {
             Product product = getProductById(productId);
-            if (product != null && resourceIds != null) {
-                // Get all current resource-product relationships
-                List<ResourceProduct> currentRelationships = resourceProductService
-                        .getResourceProductsByProductId(productId);
+            if (product == null) {
+                return null;
+            }
 
-                // Delete all existing relationships
-                if (currentRelationships != null && !currentRelationships.isEmpty()) {
-                    for (ResourceProduct rp : currentRelationships) {
-                        resourceProductService.deleteResourceProduct(rp.getId().toString());
+            // If list is null, do nothing (preserve current relationships)
+            if (resourceIds == null) {
+                return product;
+            }
+
+            // Normalize desired IDs (trim, dedupe, skip blanks)
+            Set<String> desiredIds = new HashSet<>();
+            for (String rid : resourceIds) {
+                if (rid != null) {
+                    String trimmed = rid.trim();
+                    if (!trimmed.isEmpty()) {
+                        desiredIds.add(trimmed);
                     }
                 }
+            }
 
-                // Create new relationships for each resource ID
-                for (String resourceId : resourceIds) {
-                    Resource resource = resourceRepository.getById(Integer.valueOf(resourceId));
-                    if (resource != null) {
-                        ResourceProductDTO resourceProductDTO = new ResourceProductDTO();
-                        resourceProductDTO.setResourceId(resourceId);
-                        resourceProductDTO.setProductId(productId);
-                        resourceProductDTO.setIsBanner(false); // Default value
-
-                        resourceProductService.createResourceProduct(resourceProductDTO);
+            // Load current relationships and build current ID set
+            List<ResourceProduct> currentRelationships = resourceProductService
+                    .getResourceProductsByProductId(productId);
+            Set<String> currentIds = new HashSet<>();
+            if (currentRelationships != null) {
+                for (ResourceProduct rp : currentRelationships) {
+                    try {
+                        Resource res = rp.getResource();
+                        if (res != null && res.getId() != null) {
+                            currentIds.add(res.getId().toString());
+                        }
+                    } catch (Exception ex) {
+                        // Be tolerant if lazy loading or mapping issues arise
+                        log.debug("Could not resolve resource id from ResourceProduct {}", rp != null ? rp.getId() : null, ex);
                     }
                 }
+            }
 
+            boolean changed = false;
+
+            // Determine which to add (desired - current)
+            for (String desiredId : desiredIds) {
+                if (!currentIds.contains(desiredId)) {
+                    // Validate resource exists
+                    try {
+                        Resource resource = resourceRepository.getById(Integer.valueOf(desiredId));
+                        if (resource != null) {
+                            ResourceProductDTO dto = new ResourceProductDTO();
+                            dto.setResourceId(desiredId);
+                            dto.setProductId(productId);
+                            dto.setIsBanner(false); // default flag for new relations
+                            resourceProductService.createResourceProduct(dto);
+                            changed = true;
+                        }
+                    } catch (IllegalArgumentException iae) {
+                        log.warn("Skipping invalid resource id '{}' while adding to product {}", desiredId, productId);
+                    }
+                }
+            }
+
+            // Determine which to remove (current - desired)
+            for (String currentId : currentIds) {
+                if (!desiredIds.contains(currentId)) {
+                    // Remove relationship only (do not delete the resource entity here)
+                    boolean removed = resourceProductService
+                            .deleteResourceProductByResourceIdAndProductId(currentId, productId);
+                    if (!removed) {
+                        log.warn("Failed to remove relation: product {} - resource {}", productId, currentId);
+                    }
+                    changed = true;
+                }
+            }
+
+            if (changed) {
                 product.setUpdatedAt(LocalDateTime.now());
                 return productRepository.save(product);
             }
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid resource ID format in the list", e);
+
+            // No changes required
+            return product;
+        } catch (Exception e) {
+            log.error("Error replacing product resources for product {}", productId, e);
+            return null;
         }
-        return null;
     }
     
     @Override

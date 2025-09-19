@@ -25,6 +25,7 @@ import com.playmatsec.app.controller.model.ResourceIdsDTO;
 import com.playmatsec.app.repository.model.Attribute;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Product;
+import com.playmatsec.app.repository.model.Product.ResourceWithBanner;
 import com.playmatsec.app.repository.utils.Consts.ResourceType;
 import com.playmatsec.app.service.ProductService;
 
@@ -149,7 +150,7 @@ public class ProductsController {
     ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
     uploadDTO.setType(type);
     uploadDTO.setIsBanner(isBanner);
-    Product.ResourceWithBanner created = productService.addResourceToProductAndReturnResource(id, file, uploadDTO);
+    ResourceWithBanner created = productService.addResourceToProductAndReturnResource(id, file, uploadDTO);
     return created != null ? ResponseEntity.status(201).body(created) : ResponseEntity.notFound().build();
   }
 
