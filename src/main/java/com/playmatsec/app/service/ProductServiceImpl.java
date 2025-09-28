@@ -40,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class ProductServiceImpl implements ProductService {
+    private static final java.util.Set<String> PROTECTED_CATEGORY_NAMES = Set.of("sellos", "bordes", "tipos", "tamaños");
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final AttributeRepository attributeRepository;
@@ -555,8 +556,8 @@ public class ProductServiceImpl implements ProductService {
                     isSellosCategory = resource.getCategories().stream()
                         .anyMatch(cat -> {
                             if (cat == null || cat.getName() == null) return false;
-                            String n = cat.getName().trim();
-                            return n.equalsIgnoreCase("Sellos") || n.equalsIgnoreCase("Bordes");
+                            String normalized = cat.getName().trim().toLowerCase(Locale.ROOT);
+                            return PROTECTED_CATEGORY_NAMES.contains(normalized);
                         });
                 }
             } catch (Exception e) {

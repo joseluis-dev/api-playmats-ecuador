@@ -319,6 +319,37 @@ public class ResourceServiceImpl implements ResourceService {
                         newCategories.add(category);
                     }
                 }
+
+                // Si el recurso es banner, añadir automáticamente la categoría "Productos" si existe.
+                boolean isBannerResource = false;
+                if (resource.getResourceProducts() != null) {
+                    isBannerResource = resource.getResourceProducts()
+                        .stream()
+                        .anyMatch(rp -> rp.getIsBanner() != null && rp.getIsBanner());
+                }
+                if (isBannerResource) {
+                    // Buscar categoría "Productos" (case-insensitive)
+                    Category productosCategoryFound = null;
+                    try {
+                        productosCategoryFound = categoryRepository.getCategories().stream()
+                            .filter(c -> c.getName() != null && c.getName().equalsIgnoreCase("Productos"))
+                            .findFirst()
+                            .orElse(null);
+                    } catch (Exception e) {
+                        log.warn("No se pudo obtener la lista de categorías para verificar 'Productos'", e);
+                    }
+                    final Category productosCategory = productosCategoryFound; // effectively final for lambda use
+                    if (productosCategory != null) {
+                        boolean alreadyPresent = newCategories.stream().anyMatch(c -> c.getId().equals(productosCategory.getId()));
+                        if (!alreadyPresent) {
+                            newCategories.add(productosCategory);
+                            log.debug("Categoría 'Productos' añadida automáticamente al recurso {} por ser banner", resourceId);
+                        }
+                    } else {
+                        log.info("El recurso {} es banner pero no existe la categoría 'Productos' en base de datos", resourceId);
+                    }
+                }
+
                 resource.setCategories(newCategories);
                 return resourceRepository.save(resource);
             }
