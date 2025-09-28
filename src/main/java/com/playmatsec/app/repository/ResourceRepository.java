@@ -1,5 +1,6 @@
 package com.playmatsec.app.repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,7 +43,7 @@ public class ResourceRepository {
                                 String type,
                                 Boolean isBanner,
                                 String product,
-                                List<String> categories) {
+                                String categoryFilter) {
 
         ResourceSearchCriteria spec = new ResourceSearchCriteria();
 
@@ -72,26 +73,45 @@ public class ResourceRepository {
         if (StringUtils.isNotBlank(product)) {
             spec.add(new SearchStatement(ResourceConsts.RESOURCE_PRODUCTS_PRODUCT_ID, UUID.fromString(product), SearchOperation.EQUAL));
         }
-        // categories: lista de Integer vía categories.id (OR semantics)
-        if (categories != null && !categories.isEmpty()) {
-            // soportar "1,2,3" en un único valor
-            List<Integer> categoryIds = new java.util.ArrayList<>();
-            for (String c : categories) {
-                if (c == null || c.isBlank()) continue;
-                String[] parts = c.split(",");
-                for (String p : parts) {
-                    String trimmed = p.trim();
-                    if (!trimmed.isEmpty()) {
-                        try {
-                            categoryIds.add(Integer.valueOf(trimmed));
-                        } catch (NumberFormatException ex) {
-                            // ignorar valores inválidos
-                        }
-                    }
+    // categoryFilter soporta:
+    //  - Lista de IDs: "1,2,3" (AND entre todas)
+    //  - Color HEX: #abc / #a1b2c3 (igual exacto contra categories.color)
+    //  - Texto: búsqueda parcial (ILIKE) en categories.name OR categories.description
+        if (StringUtils.isNotBlank(categoryFilter)) {
+            String filter = categoryFilter.trim();
+            boolean processed = false;
+            // Intentar como lista de IDs (AND semantics)
+            String[] idParts = filter.split(",");
+            boolean allInts = true;
+            List<Integer> idList = new ArrayList<>();
+            for (String p : idParts) {
+                String t = p.trim();
+                if (t.isEmpty()) continue;
+                try {
+                    idList.add(Integer.valueOf(t));
+                } catch (NumberFormatException ex) {
+                    allInts = false;
+                    break;
                 }
             }
-            if (!categoryIds.isEmpty()) {
-                spec.add(new SearchStatement(ResourceConsts.CATEGORIES_ID, categoryIds, SearchOperation.IN_ALL));
+            if (allInts && !idList.isEmpty()) {
+                spec.add(new SearchStatement(ResourceConsts.CATEGORIES_ID, idList, SearchOperation.IN_ALL));
+                processed = true;
+            }
+            // Intentar como color HEX (#rgb o #rrggbb)
+            if (!processed && filter.matches("(?i)^#?([0-9a-f]{3}|[0-9a-f]{6})$")) {
+                String normalized = filter.startsWith("#") ? filter.toLowerCase() : "#" + filter.toLowerCase();
+                spec.add(new SearchStatement(ResourceConsts.CATEGORIES_COLOR, normalized, SearchOperation.EQUAL));
+                processed = true;
+            }
+            // Texto libre => name OR description LIKE
+            if (!processed) {
+                String lower = filter.toLowerCase();
+                // Guardamos el texto a buscar empaquetado en un SearchStatement especial
+                // Usaremos una clave sintética para que el Specification construya el OR (lo añadiremos si no existe ya la lógica)
+                spec.add(new SearchStatement(ResourceConsts.CATEGORIES_NAME, lower, SearchOperation.MATCH));
+                spec.add(new SearchStatement(ResourceConsts.CATEGORIES_DESCRIPTION, lower, SearchOperation.MATCH));
+                processed = true;
             }
         }
         return repository.findAll(spec);

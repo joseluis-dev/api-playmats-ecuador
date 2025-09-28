@@ -17,4 +17,7 @@ public class ResourceConsts {
 
     // Rutas compuestas
     public static final String CATEGORIES_ID = CATEGORIES + ".id";
+    public static final String CATEGORIES_NAME = CATEGORIES + ".name";
+    public static final String CATEGORIES_DESCRIPTION = CATEGORIES + ".description";
+    public static final String CATEGORIES_COLOR = CATEGORIES + ".color";
 }

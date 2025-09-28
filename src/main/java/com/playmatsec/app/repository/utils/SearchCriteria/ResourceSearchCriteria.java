@@ -13,6 +13,7 @@ import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Join;
 import com.playmatsec.app.repository.model.Resource;
 import java.util.Collection;
+import java.util.ArrayList;
 
 public class ResourceSearchCriteria implements Specification<Resource> {
     private final List<SearchStatement> list = new LinkedList<>();
@@ -22,7 +23,11 @@ public class ResourceSearchCriteria implements Specification<Resource> {
     @Override
     public Predicate toPredicate(Root<Resource> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
         List<Predicate> predicates = new LinkedList<>();
-        for (SearchStatement criteria : list) {
+        // Para agrupar OR entre categories.name y categories.description cuando vienen del mismo texto
+        List<Predicate> pendingCategoryText = new ArrayList<>();
+
+        for (int i = 0; i < list.size(); i++) {
+            SearchStatement criteria = list.get(i);
             String key = criteria.getKey();
             Path<?> path = root;
             if (key.contains(".")) {
@@ -45,7 +50,16 @@ public class ResourceSearchCriteria implements Specification<Resource> {
             } else if (criteria.getOperation().equals(SearchOperation.EQUAL)) {
                 predicates.add(builder.equal(path, criteria.getValue()));
             } else if (criteria.getOperation().equals(SearchOperation.MATCH)) {
-                predicates.add(builder.like(builder.lower(path.as(String.class)), "%" + criteria.getValue().toString().toLowerCase() + "%"));
+                String likePattern = "%" + criteria.getValue().toString().toLowerCase() + "%";
+                Predicate p = builder.like(builder.lower(path.as(String.class)), likePattern);
+                // Si se trata de categories.name o categories.description, acumulamos para OR
+                boolean isCategoryName = key.endsWith(".name");
+                boolean isCategoryDescription = key.endsWith(".description");
+                if (isCategoryName || isCategoryDescription) {
+                    pendingCategoryText.add(p);
+                } else {
+                    predicates.add(p);
+                }
             } else if (criteria.getOperation().equals(SearchOperation.MATCH_END)) {
                 predicates.add(builder.like(builder.lower(path.as(String.class)), criteria.getValue().toString().toLowerCase() + "%"));
             } else if (criteria.getOperation().equals(SearchOperation.IN)) {
@@ -88,6 +102,10 @@ public class ResourceSearchCriteria implements Specification<Resource> {
                     }
                 }
             }
+        }
+        // Si se acumularon predicates para categories name/description, combinarlos con OR
+        if (!pendingCategoryText.isEmpty()) {
+            predicates.add(builder.or(pendingCategoryText.toArray(new Predicate[0])));
         }
         return builder.and(predicates.toArray(new Predicate[0]));
     }

@@ -51,11 +51,10 @@ public class ResourcesController {
       @RequestParam(required = false) String type,
       @RequestParam(required = false) Boolean isBanner,
       @RequestParam(required = false) String product,
-      @RequestParam(name = "category", required = false) List<String> categories){
+      @RequestParam(name = "category", required = false) String categoryFilter){
     log.info("headers: {}", headers);
-    // Soporta múltiples categorías: ?category=1&category=2 o ?category=1,2,3
-    List<Resource> resources = resourceService.getResources(name, url, hosting, thumbnail, watermark, type, isBanner,
-        product, categories);
+    // category = "1,2" (IDs AND), "#ff00aa" (color), "Azul" (name), "algo con espacios" (description)
+    List<Resource> resources = resourceService.getResources(name, url, hosting, thumbnail, watermark, type, isBanner, product, categoryFilter);
     return resources != null ? ResponseEntity.ok(resources) : ResponseEntity.ok(Collections.emptyList());
   }
 
