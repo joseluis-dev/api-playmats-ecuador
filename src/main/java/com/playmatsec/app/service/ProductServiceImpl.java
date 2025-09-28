@@ -546,16 +546,21 @@ public class ProductServiceImpl implements ProductService {
                 return false;
             }
 
-            // Regla especial: si el recurso pertenece a la categoría "Sellos",
-            // solo se elimina la relación con el producto, sin borrar el recurso
-            boolean isSellosCategory = false;
+            // Regla especial: si el recurso pertenece a las categorías protegidas ("Sellos" o "Bordes"),
+            // solo se elimina la relación con el producto, sin borrar el recurso.
+            // Nota: mantenemos el nombre de la variable para minimizar el cambio en la lógica existente.
+            boolean isSellosCategory = false; // true si pertenece a Sellos o Bordes
             try {
                 if (resource.getCategories() != null) {
                     isSellosCategory = resource.getCategories().stream()
-                        .anyMatch(cat -> cat != null && cat.getName() != null && cat.getName().equalsIgnoreCase("Sellos"));
+                        .anyMatch(cat -> {
+                            if (cat == null || cat.getName() == null) return false;
+                            String n = cat.getName().trim();
+                            return n.equalsIgnoreCase("Sellos") || n.equalsIgnoreCase("Bordes");
+                        });
                 }
             } catch (Exception e) {
-                log.warn("No se pudo evaluar categorías del recurso {} para la regla 'Sellos'", resourceId, e);
+                log.warn("No se pudo evaluar categorías del recurso {} para la regla de categorías protegidas (Sellos/Bordes)", resourceId, e);
             }
             
             // Verificar si existe la relación entre producto y recurso
@@ -596,7 +601,7 @@ public class ProductServiceImpl implements ProductService {
                 log.info("Recurso {} eliminado completamente (base de datos y Cloudinary) ya que solo estaba asociado al producto {}", resourceId, productId);
             } else {
                 if (isSellosCategory) {
-                    log.info("Recurso {} pertenece a la categoría 'Sellos'. Se conserva el recurso y solo se elimina la relación con el producto {}", resourceId, productId);
+                    log.info("Recurso {} pertenece a una categoría protegida (Sellos o Bordes). Se conserva el recurso y solo se elimina la relación con el producto {}", resourceId, productId);
                 } else {
                     log.info("Solo se eliminó la relación entre el producto {} y el recurso {} ya que el recurso está asociado a otros productos", productId, resourceId);
                 }
