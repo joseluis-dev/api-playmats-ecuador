@@ -19,7 +19,9 @@ public class ProductSearchCriteria implements Specification<Product> {
     @SuppressWarnings("null")
     @Override
     public Predicate toPredicate(Root<Product> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
-        List<Predicate> predicates = new LinkedList<>();
+    List<Predicate> predicates = new LinkedList<>();
+    List<Predicate> pendingResourceUrlLike = new LinkedList<>(); // agrupar url/thumbnail/watermark
+    List<Predicate> pendingResourceNameHosting = new LinkedList<>(); // agrupar name/hosting
         for (SearchStatement criteria : list) {
             String key = criteria.getKey();
             Path<?> path = root;
@@ -43,10 +45,25 @@ public class ProductSearchCriteria implements Specification<Product> {
             } else if (criteria.getOperation().equals(SearchOperation.EQUAL)) {
                 predicates.add(builder.equal(path, criteria.getValue()));
             } else if (criteria.getOperation().equals(SearchOperation.MATCH)) {
-                predicates.add(builder.like(builder.lower(path.as(String.class)), "%" + criteria.getValue().toString().toLowerCase() + "%"));
+                String likeVal = "%" + criteria.getValue().toString().toLowerCase() + "%";
+                Predicate p = builder.like(builder.lower(path.as(String.class)), likeVal);
+                String keyLower = key.toLowerCase();
+                if (keyLower.endsWith(".url") || keyLower.endsWith(".thumbnail") || keyLower.endsWith(".watermark")) {
+                    pendingResourceUrlLike.add(p);
+                } else if (keyLower.endsWith(".name") || keyLower.endsWith(".hosting")) {
+                    pendingResourceNameHosting.add(p);
+                } else {
+                    predicates.add(p);
+                }
             } else if (criteria.getOperation().equals(SearchOperation.MATCH_END)) {
                 predicates.add(builder.like(builder.lower(path.as(String.class)), criteria.getValue().toString().toLowerCase() + "%"));
             }
+        }
+        if (!pendingResourceUrlLike.isEmpty()) {
+            predicates.add(builder.or(pendingResourceUrlLike.toArray(new Predicate[0])));
+        }
+        if (!pendingResourceNameHosting.isEmpty()) {
+            predicates.add(builder.or(pendingResourceNameHosting.toArray(new Predicate[0])));
         }
         return builder.and(predicates.toArray(new Predicate[0]));
     }

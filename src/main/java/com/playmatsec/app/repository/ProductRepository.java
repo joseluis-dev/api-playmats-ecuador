@@ -34,7 +34,7 @@ public class ProductRepository {
         repository.delete(product);
     }
 
-    public List<Product> search(String name, String description, Double price, Boolean isCustomizable) {
+    public List<Product> search(String name, String description, Double price, Boolean isCustomizable, String resourceFilter) {
         ProductSearchCriteria spec = new ProductSearchCriteria();
         if (StringUtils.isNotBlank(name)) {
             spec.add(new SearchStatement(ProductConsts.NAME, name, SearchOperation.MATCH));
@@ -47,6 +47,38 @@ public class ProductRepository {
         }
         if (isCustomizable != null) {
             spec.add(new SearchStatement(ProductConsts.IS_CUSTOMIZABLE, isCustomizable, SearchOperation.EQUAL));
+        }
+        // Filtro unificado por recurso asociado (cualquiera de sus campos principales)
+        if (StringUtils.isNotBlank(resourceFilter)) {
+            String trimmed = resourceFilter.trim();
+            boolean handled = false;
+            // 1. Intentar ID numérico del recurso
+            try {
+                Integer rid = Integer.valueOf(trimmed);
+                spec.add(new SearchStatement(ProductConsts.RESOURCE_PRODUCTS_RESOURCE_ID, rid, SearchOperation.EQUAL));
+                handled = true;
+            } catch (NumberFormatException ignored) { }
+
+            // 2. Detectar si parece publicId (empieza por "resources/")
+            if (!handled && trimmed.startsWith("resources/")) {
+                spec.add(new SearchStatement(ProductConsts.RESOURCE_PRODUCTS_RESOURCE_PUBLIC_ID, trimmed, SearchOperation.MATCH));
+                handled = true;
+            }
+
+            // 3. Detectar si es URL (http/https)
+            if (!handled && (trimmed.startsWith("http://") || trimmed.startsWith("https://"))) {
+                // Aplicar sobre url, thumbnail y watermark (OR se gestionará en criteria)
+                spec.add(new SearchStatement(ProductConsts.RESOURCE_PRODUCTS_RESOURCE_URL, trimmed, SearchOperation.MATCH));
+                spec.add(new SearchStatement(ProductConsts.RESOURCE_PRODUCTS_RESOURCE_THUMBNAIL, trimmed, SearchOperation.MATCH));
+                spec.add(new SearchStatement(ProductConsts.RESOURCE_PRODUCTS_RESOURCE_WATERMARK, trimmed, SearchOperation.MATCH));
+                handled = true;
+            }
+
+            // 4. Si no se manejó aún, aplicar como texto sobre name y hosting
+            if (!handled) {
+                spec.add(new SearchStatement(ProductConsts.RESOURCE_PRODUCTS_RESOURCE_NAME, trimmed, SearchOperation.MATCH));
+                spec.add(new SearchStatement(ProductConsts.RESOURCE_PRODUCTS_RESOURCE_HOSTING, trimmed, SearchOperation.MATCH));
+            }
         }
         return repository.findAll(spec);
     }

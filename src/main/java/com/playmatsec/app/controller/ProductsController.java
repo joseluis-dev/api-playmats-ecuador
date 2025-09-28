@@ -44,10 +44,11 @@ public class ProductsController {
     @RequestParam(required = false) String name,
     @RequestParam(required = false) String description,
     @RequestParam(required = false) Double price,
-    @RequestParam(required = false) Boolean isCustomizable
+    @RequestParam(required = false) Boolean isCustomizable,
+    @RequestParam(name = "resource", required = false) String resourceFilter
   ) {
     log.info("headers: {}", headers);
-    List<Product> products = productService.getProducts(name, description, price, isCustomizable);
+    List<Product> products = productService.getProducts(name, description, price, isCustomizable, resourceFilter);
     return products != null ? ResponseEntity.ok(products) : ResponseEntity.ok(Collections.emptyList());
   }
 
