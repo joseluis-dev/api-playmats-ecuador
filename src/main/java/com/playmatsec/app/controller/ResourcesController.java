@@ -3,6 +3,7 @@ package com.playmatsec.app.controller;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -51,24 +52,26 @@ public class ResourcesController {
       @RequestParam(required = false) String type,
       @RequestParam(required = false) Boolean isBanner,
       @RequestParam(required = false) String product,
-      @RequestParam(name = "category", required = false) String categoryFilter){
-    log.info("headers: {}", headers);
+      @RequestParam(name = "category", required = false) String categoryFilter,
+      HttpServletRequest request){
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     // category = "1,2" (IDs AND), "#ff00aa" (color), "Azul" (name), "algo con espacios" (description)
     List<Resource> resources = resourceService.getResources(name, url, hosting, thumbnail, watermark, type, isBanner, product, categoryFilter);
     return resources != null ? ResponseEntity.ok(resources) : ResponseEntity.ok(Collections.emptyList());
   }
 
   @GetMapping("/resources/{id}")
-  public ResponseEntity<Resource> getResourceById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
-    log.info("headers: {}", headers);
+  public ResponseEntity<Resource> getResourceById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Resource resource = resourceService.getResourceById(id);
     return resource != null ? ResponseEntity.ok(resource) : ResponseEntity.notFound().build();
   }
 
   @DeleteMapping("/resources/{id}")
   public ResponseEntity<Boolean> deleteResourceById(@RequestHeader Map<String, String> headers,
-      @PathVariable String id) {
-    log.info("headers: {}", headers);
+      @PathVariable String id,
+      HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     boolean deleted = resourceService.deleteResource(id);
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
@@ -82,8 +85,9 @@ public class ResourcesController {
       @RequestParam("file") MultipartFile file,
       @RequestParam(value = "isBanner", required = false) Boolean isBanner,
       @RequestParam(value = "name") String name,
-      @RequestParam(value = "productId", required = false) String productId) {
-    log.info("headers: {}", headers);
+      @RequestParam(value = "productId", required = false) String productId,
+      HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
     // El tipo será detectado automáticamente basado en el archivo
     uploadDTO.setIsBanner(isBanner);
@@ -95,8 +99,9 @@ public class ResourcesController {
 
   @PatchMapping("/resources/{id}")
   public ResponseEntity<Resource> updateResource(@RequestHeader Map<String, String> headers, @PathVariable String id,
-      @RequestBody String patchBody) {
-    log.info("headers: {}", headers);
+      @RequestBody String patchBody,
+      HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Resource updatedResource = resourceService.updateResource(id, patchBody);
     return updatedResource != null ? ResponseEntity.ok(updatedResource) : ResponseEntity.notFound().build();
   }
@@ -129,8 +134,9 @@ public class ResourcesController {
       @RequestParam(value = "file", required = false) MultipartFile file,
       @RequestParam(value = "isBanner", required = false) Boolean isBanner,
       @RequestParam(value = "name") String name,
-      @RequestParam(value = "productId", required = false) String productId) {
-    log.info("headers: {}", headers);
+      @RequestParam(value = "productId", required = false) String productId,
+      HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     
     ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
     // El tipo será detectado automáticamente basado en el archivo
@@ -145,50 +151,52 @@ public class ResourcesController {
   // Categories endpoints
   @GetMapping("/resources/{id}/categories")
   public ResponseEntity<List<Category>> getResourceCategories(@RequestHeader Map<String, String> headers,
-      @PathVariable String id) {
-    log.info("headers: {}", headers);
+      @PathVariable String id,
+      HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Category> categories = resourceService.getResourceCategories(id);
     return categories != null ? ResponseEntity.ok(categories) : ResponseEntity.notFound().build();
   }
 
   @PostMapping("/resources/{id}/categories")
   public ResponseEntity<Resource> addResourceCategories(@RequestHeader Map<String, String> headers,
-      @PathVariable String id, @RequestBody CategoryIdsDTO request) {
-    log.info("headers: {}", headers);
-    Resource updatedResource = resourceService.addCategoriesToResource(id, request.getCategoryIds());
+      @PathVariable String id, @RequestBody CategoryIdsDTO requestBody, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    Resource updatedResource = resourceService.addCategoriesToResource(id, requestBody.getCategoryIds());
     return updatedResource != null ? ResponseEntity.ok(updatedResource) : ResponseEntity.notFound().build();
   }
 
   @PutMapping("/resources/{id}/categories")
   public ResponseEntity<Resource> replaceResourceCategories(@RequestHeader Map<String, String> headers,
-      @PathVariable String id, @RequestBody CategoryIdsDTO request) {
-    log.info("headers: {}", headers);
-    Resource updatedResource = resourceService.replaceResourceCategories(id, request.getCategoryIds());
+      @PathVariable String id, @RequestBody CategoryIdsDTO requestBody, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    Resource updatedResource = resourceService.replaceResourceCategories(id, requestBody.getCategoryIds());
     return updatedResource != null ? ResponseEntity.ok(updatedResource) : ResponseEntity.notFound().build();
   }
 
   // Attributes endpoints
   @GetMapping("/resources/{id}/attributes")
   public ResponseEntity<List<Attribute>> getResourceAttributes(@RequestHeader Map<String, String> headers,
-      @PathVariable String id) {
-    log.info("headers: {}", headers);
+      @PathVariable String id,
+      HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Attribute> attributes = resourceService.getResourceAttributes(id);
     return attributes != null ? ResponseEntity.ok(attributes) : ResponseEntity.notFound().build();
   }
 
   @PostMapping("/resources/{id}/attributes")
   public ResponseEntity<Resource> addResourceAttributes(@RequestHeader Map<String, String> headers,
-      @PathVariable String id, @RequestBody AttributeIdsDTO request) {
-    log.info("headers: {}", headers);
-    Resource updatedResource = resourceService.addAttributesToResource(id, request.getAttributeIds());
+      @PathVariable String id, @RequestBody AttributeIdsDTO requestBody, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    Resource updatedResource = resourceService.addAttributesToResource(id, requestBody.getAttributeIds());
     return updatedResource != null ? ResponseEntity.ok(updatedResource) : ResponseEntity.notFound().build();
   }
 
   @PutMapping("/resources/{id}/attributes")
   public ResponseEntity<Resource> replaceResourceAttributes(@RequestHeader Map<String, String> headers,
-      @PathVariable String id, @RequestBody AttributeIdsDTO request) {
-    log.info("headers: {}", headers);
-    Resource updatedResource = resourceService.replaceResourceAttributes(id, request.getAttributeIds());
+      @PathVariable String id, @RequestBody AttributeIdsDTO requestBody, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    Resource updatedResource = resourceService.replaceResourceAttributes(id, requestBody.getAttributeIds());
     return updatedResource != null ? ResponseEntity.ok(updatedResource) : ResponseEntity.notFound().build();
   }
 }

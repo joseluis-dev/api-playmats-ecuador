@@ -3,6 +3,7 @@ package com.playmatsec.app.controller;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -46,38 +47,39 @@ public class OrdersController {
     @RequestParam(required = false) String totalAmount,
     @RequestParam(required = false) String shippingAddress,
     @RequestParam(required = false) String billingAddress,
-    @RequestParam(required = false) String payment
+    @RequestParam(required = false) String payment,
+    HttpServletRequest request
   ) {
-    log.info("headers: {}", headers);
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Order> orders = orderService.getOrders(user, createdAt, updatedAt, status, totalAmount, shippingAddress, billingAddress, payment);
     return orders != null ? ResponseEntity.ok(orders) : ResponseEntity.ok(Collections.emptyList());
   }
 
   @GetMapping("/orders/{id}")
-  public ResponseEntity<Order> getOrderById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
-    log.info("headers: {}", headers);
+  public ResponseEntity<Order> getOrderById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Order order = orderService.getOrderById(id);
     return order != null ? ResponseEntity.ok(order) : ResponseEntity.notFound().build();
   }
 
   @GetMapping("/orders/{id}/products")
-  public ResponseEntity<List<Product>> getOrderProductsByOrderId(@RequestHeader Map<String, String> headers, @PathVariable String id) {
-    log.info("headers: {}", headers);
+  public ResponseEntity<List<Product>> getOrderProductsByOrderId(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Product> products = orderService.getProductsByOrderId(id);
     return products != null ? ResponseEntity.ok(products) : ResponseEntity.notFound().build();
   }
 
   // Nuevo endpoint que retorna los OrderProducts con datos de cantidad, unitPrice, subtotal y el producto anidado
   @GetMapping("/orders/{id}/order-products")
-  public ResponseEntity<List<OrderProduct>> getOrderProductsDetails(@RequestHeader Map<String, String> headers, @PathVariable String id) {
-    log.info("headers: {}", headers);
+  public ResponseEntity<List<OrderProduct>> getOrderProductsDetails(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<OrderProduct> orderProducts = orderService.getOrderProductsByOrderId(id);
     return orderProducts != null ? ResponseEntity.ok(orderProducts) : ResponseEntity.ok(Collections.emptyList());
   }
 
   @DeleteMapping("/orders/{id}")
-  public ResponseEntity<Boolean> deleteOrderById(@RequestHeader Map<String, String> headers, @PathVariable String id) {
-    log.info("headers: {}", headers);
+  public ResponseEntity<Boolean> deleteOrderById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     boolean deleted = orderService.deleteOrder(id);
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
@@ -93,8 +95,9 @@ public class OrdersController {
   public ResponseEntity<Order> createOrderWithImage(
       @RequestHeader Map<String, String> headers,
       @RequestPart("order") String orderJson,
-      @RequestPart(value = "paymentImage", required = false) MultipartFile paymentImage) {
-    log.info("headers: {}", headers);
+      @RequestPart(value = "paymentImage", required = false) MultipartFile paymentImage,
+      HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     try {
       OrderDTO order = objectMapper.reader()
           .with(JsonParser.Feature.ALLOW_COMMENTS)
@@ -108,15 +111,15 @@ public class OrdersController {
   }
 
   @PatchMapping("/orders/{id}")
-  public ResponseEntity<Order> updateOrder(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody) {
-    log.info("headers: {}", headers);
+  public ResponseEntity<Order> updateOrder(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Order updatedOrder = orderService.updateOrder(id, patchBody);
     return updatedOrder != null ? ResponseEntity.ok(updatedOrder) : ResponseEntity.notFound().build();
   }
 
   @PutMapping("/orders/{id}")
-  public ResponseEntity<Order> replaceOrder(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody OrderDTO order) {
-    log.info("headers: {}", headers);
+  public ResponseEntity<Order> replaceOrder(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody OrderDTO order, HttpServletRequest request) {
+    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Order replacedOrder = orderService.updateOrder(id, order);
     return replacedOrder != null ? ResponseEntity.ok(replacedOrder) : ResponseEntity.notFound().build();
   }
