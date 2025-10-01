@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.playmatsec.app.config.Authorized;
 import com.playmatsec.app.controller.model.StateDTO;
 import com.playmatsec.app.repository.model.State;
 import com.playmatsec.app.service.StateService;
@@ -27,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
+@Authorized
 public class StatesController {
   private final StateService stateService;
 

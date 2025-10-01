@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.playmatsec.app.config.Authorized;
 import com.playmatsec.app.controller.model.CartDTO;
 import com.playmatsec.app.repository.model.Cart;
 import com.playmatsec.app.service.CartService;
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
+@Authorized
 public class CartController {
   private final CartService cartService;
 

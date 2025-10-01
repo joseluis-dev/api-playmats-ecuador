@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import com.playmatsec.app.config.Authorized;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
@@ -25,6 +26,7 @@ import com.playmatsec.app.service.UserService;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
+@Authorized
 public class UsersController {
   private final UserService userService;
 

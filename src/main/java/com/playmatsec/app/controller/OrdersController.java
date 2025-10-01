@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonParser;
-
+import com.playmatsec.app.config.Authorized;
 import com.playmatsec.app.controller.model.OrderDTO;
 import com.playmatsec.app.repository.model.Order;
 import com.playmatsec.app.repository.model.Product;
@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
+@Authorized
 public class OrdersController {
   private final OrderService orderService;
   private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;

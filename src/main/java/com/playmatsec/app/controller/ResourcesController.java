@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
 import com.playmatsec.app.controller.model.CategoryIdsDTO;
+import com.playmatsec.app.config.Authorized;
 import com.playmatsec.app.controller.model.AttributeIdsDTO;
 import com.playmatsec.app.repository.model.Resource;
 import com.playmatsec.app.repository.model.Category;
@@ -67,6 +68,7 @@ public class ResourcesController {
     return resource != null ? ResponseEntity.ok(resource) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @DeleteMapping("/resources/{id}")
   public ResponseEntity<Boolean> deleteResourceById(@RequestHeader Map<String, String> headers,
       @PathVariable String id,
@@ -80,6 +82,7 @@ public class ResourcesController {
    * Crea un nuevo recurso subiendo un archivo a Cloudinary.
    * El tipo de archivo se detecta automáticamente basado en el contenido.
    */
+  @Authorized
   @PostMapping("/resources")
   public ResponseEntity<Resource> createResource(@RequestHeader Map<String, String> headers,
       @RequestParam("file") MultipartFile file,
@@ -97,6 +100,7 @@ public class ResourcesController {
     return createdResource != null ? ResponseEntity.ok(createdResource) : ResponseEntity.badRequest().build();
   }
 
+  @Authorized
   @PatchMapping("/resources/{id}")
   public ResponseEntity<Resource> updateResource(@RequestHeader Map<String, String> headers, @PathVariable String id,
       @RequestBody String patchBody,
@@ -127,6 +131,7 @@ public class ResourcesController {
    * @param name Nombre del recurso (opcional)
    * @return El recurso actualizado
    */
+  @Authorized
   @PutMapping(value = "/resources/{id}", consumes = "multipart/form-data")
   public ResponseEntity<Resource> updateResourceWithFile(
       @RequestHeader Map<String, String> headers,
@@ -158,6 +163,7 @@ public class ResourcesController {
     return categories != null ? ResponseEntity.ok(categories) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PostMapping("/resources/{id}/categories")
   public ResponseEntity<Resource> addResourceCategories(@RequestHeader Map<String, String> headers,
       @PathVariable String id, @RequestBody CategoryIdsDTO requestBody, HttpServletRequest request) {
@@ -166,6 +172,7 @@ public class ResourcesController {
     return updatedResource != null ? ResponseEntity.ok(updatedResource) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PutMapping("/resources/{id}/categories")
   public ResponseEntity<Resource> replaceResourceCategories(@RequestHeader Map<String, String> headers,
       @PathVariable String id, @RequestBody CategoryIdsDTO requestBody, HttpServletRequest request) {
@@ -184,6 +191,7 @@ public class ResourcesController {
     return attributes != null ? ResponseEntity.ok(attributes) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PostMapping("/resources/{id}/attributes")
   public ResponseEntity<Resource> addResourceAttributes(@RequestHeader Map<String, String> headers,
       @PathVariable String id, @RequestBody AttributeIdsDTO requestBody, HttpServletRequest request) {
@@ -192,6 +200,7 @@ public class ResourcesController {
     return updatedResource != null ? ResponseEntity.ok(updatedResource) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PutMapping("/resources/{id}/attributes")
   public ResponseEntity<Resource> replaceResourceAttributes(@RequestHeader Map<String, String> headers,
       @PathVariable String id, @RequestBody AttributeIdsDTO requestBody, HttpServletRequest request) {

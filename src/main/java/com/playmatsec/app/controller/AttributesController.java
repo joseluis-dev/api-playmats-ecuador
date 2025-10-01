@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.playmatsec.app.config.Authorized;
 import com.playmatsec.app.controller.model.AttributeDTO;
 import com.playmatsec.app.repository.model.Attribute;
 import com.playmatsec.app.service.AttributeService;
@@ -60,6 +61,7 @@ public class AttributesController {
     return attribute != null ? ResponseEntity.ok(attribute) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @DeleteMapping("/attributes/{id}")
   public ResponseEntity<Boolean> deleteAttributeById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -67,6 +69,7 @@ public class AttributesController {
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PostMapping("/attributes")
   public ResponseEntity<Attribute> createAttribute(@RequestHeader Map<String, String> headers, @RequestBody AttributeDTO attribute, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -76,6 +79,7 @@ public class AttributesController {
         : ResponseEntity.badRequest().build();
   }
 
+  @Authorized
   @PatchMapping("/attributes/{id}")
   public ResponseEntity<Attribute> updateAttribute(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -83,6 +87,7 @@ public class AttributesController {
     return updatedAttribute != null ? ResponseEntity.ok(updatedAttribute) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PutMapping("/attributes/{id}")
   public ResponseEntity<Attribute> replaceAttribute(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody AttributeDTO attribute, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.playmatsec.app.controller.model.ProductDTO;
 import com.playmatsec.app.controller.model.CategoryIdsDTO;
+import com.playmatsec.app.config.Authorized;
 import com.playmatsec.app.controller.model.AttributeIdsDTO;
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
 import com.playmatsec.app.controller.model.ResourceIdsDTO;
@@ -61,6 +62,7 @@ public class ProductsController {
     return product != null ? ResponseEntity.ok(product) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @DeleteMapping("/products/{id}")
   public ResponseEntity<Boolean> deleteProductById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -68,6 +70,7 @@ public class ProductsController {
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PostMapping("/products")
   public ResponseEntity<Product> createProduct(@RequestHeader Map<String, String> headers, @RequestBody ProductDTO product, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -75,6 +78,7 @@ public class ProductsController {
     return createdProduct != null ? ResponseEntity.ok(createdProduct) : ResponseEntity.badRequest().build();
   }
 
+  @Authorized
   @PatchMapping("/products/{id}")
   public ResponseEntity<Product> updateProduct(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -82,6 +86,7 @@ public class ProductsController {
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PutMapping("/products/{id}")
   public ResponseEntity<Product> replaceProduct(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ProductDTO product, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -97,6 +102,7 @@ public class ProductsController {
     return categories != null ? ResponseEntity.ok(categories) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PostMapping("/products/{id}/categories")
   public ResponseEntity<Product> addProductCategories(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody CategoryIdsDTO requestBody, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -104,6 +110,7 @@ public class ProductsController {
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PutMapping("/products/{id}/categories")
   public ResponseEntity<Product> replaceProductCategories(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody CategoryIdsDTO requestBody, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -119,6 +126,7 @@ public class ProductsController {
     return attributes != null ? ResponseEntity.ok(attributes) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PostMapping("/products/{id}/attributes")
   public ResponseEntity<Product> addProductAttributes(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody AttributeIdsDTO requestBody, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -126,6 +134,7 @@ public class ProductsController {
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PutMapping("/products/{id}/attributes")
   public ResponseEntity<Product> replaceProductAttributes(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody AttributeIdsDTO requestBody, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -141,6 +150,7 @@ public class ProductsController {
     return resources != null ? ResponseEntity.ok(resources) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PostMapping("/products/{id}/resources")
   public ResponseEntity<Product.ResourceWithBanner> addProductResource(
     @RequestHeader Map<String, String> headers,
@@ -158,6 +168,7 @@ public class ProductsController {
     return created != null ? ResponseEntity.status(201).body(created) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PostMapping("/products/{id}/resources/bulk")
   public ResponseEntity<Product> addProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ResourceIdsDTO requestBody, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -165,13 +176,15 @@ public class ProductsController {
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PutMapping("/products/{id}/resources")
   public ResponseEntity<Product> replaceProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ResourceIdsDTO requestBody, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product updatedProduct = productService.replaceProductResources(id, requestBody.getResourceIds());
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
-  
+
+  @Authorized
   @DeleteMapping("/products/{id}/resources/{resourceId}")
   public ResponseEntity<Map<String, Object>> deleteProductResource(
     @RequestHeader Map<String, String> headers, 

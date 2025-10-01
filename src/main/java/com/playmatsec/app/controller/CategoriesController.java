@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.playmatsec.app.config.Authorized;
 import com.playmatsec.app.controller.model.CategoryDTO;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.service.CategoryService;
@@ -50,6 +51,7 @@ public class CategoriesController {
     return category != null ? ResponseEntity.ok(category) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @DeleteMapping("/categories/{id}")
   public ResponseEntity<Boolean> deleteCategoryById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -57,6 +59,7 @@ public class CategoriesController {
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PostMapping("/categories")
   public ResponseEntity<Category> createCategory(@RequestHeader Map<String, String> headers, @RequestBody CategoryDTO category, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -64,6 +67,7 @@ public class CategoriesController {
     return createdCategory != null ? ResponseEntity.ok(createdCategory) : ResponseEntity.badRequest().build();
   }
 
+  @Authorized
   @PatchMapping("/categories/{id}")
   public ResponseEntity<Category> updateCategory(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
@@ -71,6 +75,7 @@ public class CategoriesController {
     return updatedCategory != null ? ResponseEntity.ok(updatedCategory) : ResponseEntity.notFound().build();
   }
 
+  @Authorized
   @PutMapping("/categories/{id}")
   public ResponseEntity<Category> replaceCategory(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody CategoryDTO category, HttpServletRequest request) {
     log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
