@@ -62,8 +62,6 @@ public class CartServiceImpl implements CartService {
             || createdAtParsed != null
             || updatedAtParsed != null
             || total != null) {
-            log.info("Searching carts with criteria - user: {}, total: {}, createdAt: {}, updatedAt: {}",
-                user, total, createdAtParsed, updatedAtParsed);
             return cartRepository.search(user, total, createdAtParsed, updatedAtParsed);
         }
         List<Cart> carts = cartRepository.getCarts();

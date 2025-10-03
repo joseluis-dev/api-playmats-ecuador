@@ -302,7 +302,7 @@ public class ProductServiceImpl implements ProductService {
                 // Determinar el tipo automáticamente si no viene
                 ResourceType detectedType = determineResourceType(file);
 
-                String folder = "products/";
+                String folder = "products/" + productId + "/";
                 Map<String, String> uploadResult = cloudinaryService.uploadImage(file, folder);
 
                 if (uploadResult != null) {
@@ -321,7 +321,6 @@ public class ProductServiceImpl implements ProductService {
                     resource.setPublicId(uploadResult.get("publicId"));
 
                     Resource savedResource = resourceRepository.save(resource);
-                    log.info("*** Resource saved with ID: {}", savedResource.getId());
                     ResourceProductDTO resourceProductDTO = new ResourceProductDTO();
                     resourceProductDTO.setResourceId(savedResource.getId().toString());
                     resourceProductDTO.setProductId(productId);
@@ -597,14 +596,6 @@ public class ProductServiceImpl implements ProductService {
                     if (!cloudinaryDeleted) {
                         log.warn("No se pudo eliminar la imagen de Cloudinary con publicId: {}", publicId);
                     }
-                }
-                
-                log.info("Recurso {} eliminado completamente (base de datos y Cloudinary) ya que solo estaba asociado al producto {}", resourceId, productId);
-            } else {
-                if (isSellosCategory) {
-                    log.info("Recurso {} pertenece a una categoría protegida (Sellos o Bordes). Se conserva el recurso y solo se elimina la relación con el producto {}", resourceId, productId);
-                } else {
-                    log.info("Solo se eliminó la relación entre el producto {} y el recurso {} ya que el recurso está asociado a otros productos", productId, resourceId);
                 }
             }
             

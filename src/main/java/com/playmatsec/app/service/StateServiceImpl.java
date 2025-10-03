@@ -83,7 +83,6 @@ public class StateServiceImpl implements StateService {
     public State updateState(String id, StateDTO request) {
         State state = getStateById(id);
         if (state != null) {
-            log.info("Updating state with ID: {} and data: {}", id, request.getCountry());
             if (request.getCountry() != null && request.getCountry().getId() != null) {
                 Country country = countryRepository.getById(request.getCountry().getId());
                 state.setCountry(country);

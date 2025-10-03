@@ -41,7 +41,7 @@ public class AttributesController {
     @RequestParam(required = false) String updatedAt,
     HttpServletRequest request
   ) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Attribute> attributes = attributeService.getAttributes(
       name,
       value,
@@ -56,7 +56,7 @@ public class AttributesController {
 
   @GetMapping("/attributes/{id}")
   public ResponseEntity<Attribute> getAttributeById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Attribute attribute = attributeService.getAttributeById(id);
     return attribute != null ? ResponseEntity.ok(attribute) : ResponseEntity.notFound().build();
   }
@@ -64,7 +64,7 @@ public class AttributesController {
   @Authorized
   @DeleteMapping("/attributes/{id}")
   public ResponseEntity<Boolean> deleteAttributeById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     boolean deleted = attributeService.deleteAttribute(id);
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
@@ -72,7 +72,7 @@ public class AttributesController {
   @Authorized
   @PostMapping("/attributes")
   public ResponseEntity<Attribute> createAttribute(@RequestHeader Map<String, String> headers, @RequestBody AttributeDTO attribute, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Attribute createdAttribute = attributeService.createAttribute(attribute);
     return createdAttribute != null
         ? ResponseEntity.ok(createdAttribute)
@@ -82,7 +82,7 @@ public class AttributesController {
   @Authorized
   @PatchMapping("/attributes/{id}")
   public ResponseEntity<Attribute> updateAttribute(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Attribute updatedAttribute = attributeService.updateAttribute(id, patchBody);
     return updatedAttribute != null ? ResponseEntity.ok(updatedAttribute) : ResponseEntity.notFound().build();
   }
@@ -90,7 +90,7 @@ public class AttributesController {
   @Authorized
   @PutMapping("/attributes/{id}")
   public ResponseEntity<Attribute> replaceAttribute(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody AttributeDTO attribute, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Attribute replacedAttribute = attributeService.updateAttribute(id, attribute);
     return replacedAttribute != null ? ResponseEntity.ok(replacedAttribute) : ResponseEntity.notFound().build();
   }

@@ -39,42 +39,42 @@ public class StatesController {
     @RequestParam(required = false) Integer countryId,
     HttpServletRequest request
   ) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<State> states = stateService.getStates(nombre, countryId);
     return states != null ? ResponseEntity.ok(states) : ResponseEntity.ok(Collections.emptyList());
   }
 
   @GetMapping("/states/{id}")
   public ResponseEntity<State> getStateById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     State state = stateService.getStateById(id);
     return state != null ? ResponseEntity.ok(state) : ResponseEntity.notFound().build();
   }
 
   @DeleteMapping("/states/{id}")
   public ResponseEntity<Boolean> deleteStateById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     boolean deleted = stateService.deleteState(id);
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
   @PostMapping("/states")
   public ResponseEntity<State> createState(@RequestHeader Map<String, String> headers, @RequestBody StateDTO state, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     State createdState = stateService.createState(state);
     return createdState != null ? ResponseEntity.ok(createdState) : ResponseEntity.badRequest().build();
   }
 
   @PatchMapping("/states/{id}")
   public ResponseEntity<State> updateState(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     State updatedState = stateService.updateState(id, patchBody);
     return updatedState != null ? ResponseEntity.ok(updatedState) : ResponseEntity.notFound().build();
   }
 
   @PutMapping("/states/{id}")
   public ResponseEntity<State> replaceState(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody StateDTO state, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     State replacedState = stateService.updateState(id, state);
     return replacedState != null ? ResponseEntity.ok(replacedState) : ResponseEntity.notFound().build();
   }

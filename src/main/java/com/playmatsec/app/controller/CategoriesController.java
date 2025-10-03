@@ -39,14 +39,14 @@ public class CategoriesController {
     @RequestParam(required = false) String color,
     HttpServletRequest request
   ) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Category> categories = categoryService.getCategories(name, description, color);
     return categories != null ? ResponseEntity.ok(categories) : ResponseEntity.ok(Collections.emptyList());
   }
 
   @GetMapping("/categories/{id}")
   public ResponseEntity<Category> getCategoryById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Category category = categoryService.getCategoryById(id);
     return category != null ? ResponseEntity.ok(category) : ResponseEntity.notFound().build();
   }
@@ -54,7 +54,7 @@ public class CategoriesController {
   @Authorized
   @DeleteMapping("/categories/{id}")
   public ResponseEntity<Boolean> deleteCategoryById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     boolean deleted = categoryService.deleteCategory(id);
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
@@ -62,7 +62,7 @@ public class CategoriesController {
   @Authorized
   @PostMapping("/categories")
   public ResponseEntity<Category> createCategory(@RequestHeader Map<String, String> headers, @RequestBody CategoryDTO category, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Category createdCategory = categoryService.createCategory(category);
     return createdCategory != null ? ResponseEntity.ok(createdCategory) : ResponseEntity.badRequest().build();
   }
@@ -70,7 +70,7 @@ public class CategoriesController {
   @Authorized
   @PatchMapping("/categories/{id}")
   public ResponseEntity<Category> updateCategory(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Category updatedCategory = categoryService.updateCategory(id, patchBody);
     return updatedCategory != null ? ResponseEntity.ok(updatedCategory) : ResponseEntity.notFound().build();
   }
@@ -78,7 +78,7 @@ public class CategoriesController {
   @Authorized
   @PutMapping("/categories/{id}")
   public ResponseEntity<Category> replaceCategory(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody CategoryDTO category, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Category replacedCategory = categoryService.updateCategory(id, category);
     return replacedCategory != null ? ResponseEntity.ok(replacedCategory) : ResponseEntity.notFound().build();
   }

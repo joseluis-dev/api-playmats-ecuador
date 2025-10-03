@@ -42,49 +42,49 @@ public class CartController {
     @RequestParam(required = false) String updatedAt,
     HttpServletRequest request
   ) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Cart> carts = cartService.getCarts(user, total, createdAt, updatedAt);
     return carts != null ? ResponseEntity.ok(carts) : ResponseEntity.ok(Collections.emptyList());
   }
 
   @GetMapping("/carts/{id}")
   public ResponseEntity<Cart> getCartById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Cart cart = cartService.getCartById(id);
     return cart != null ? ResponseEntity.ok(cart) : ResponseEntity.notFound().build();
   }
 
   @DeleteMapping("/carts/{id}")
   public ResponseEntity<Boolean> deleteCartById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     boolean deleted = cartService.deleteCart(id);
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
   @DeleteMapping("/carts")
   public ResponseEntity<Boolean> clearCartByUser(@RequestHeader Map<String, String> headers, @RequestParam String user, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     boolean cleared = cartService.clearCartByUser(user);
     return cleared ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
   @PostMapping("/carts")
   public ResponseEntity<Cart> createCart(@RequestHeader Map<String, String> headers, @RequestBody CartDTO cart, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Cart createdCart = cartService.createCart(cart);
     return createdCart != null ? ResponseEntity.ok(createdCart) : ResponseEntity.badRequest().build();
   }
 
   @PatchMapping("/carts/{id}")
   public ResponseEntity<Cart> updateCart(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Cart updatedCart = cartService.updateCart(id, patchBody);
     return updatedCart != null ? ResponseEntity.ok(updatedCart) : ResponseEntity.notFound().build();
   }
 
   @PutMapping("/carts/{id}")
   public ResponseEntity<Cart> replaceCart(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody CartDTO cart, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Cart replacedCart = cartService.updateCart(id, cart);
     return replacedCart != null ? ResponseEntity.ok(replacedCart) : ResponseEntity.notFound().build();
   }

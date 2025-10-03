@@ -50,14 +50,14 @@ public class ProductsController {
     @RequestParam(name = "resource", required = false) String resourceFilter,
     HttpServletRequest request
   ) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Product> products = productService.getProducts(name, description, price, isCustomizable, resourceFilter);
     return products != null ? ResponseEntity.ok(products) : ResponseEntity.ok(Collections.emptyList());
   }
 
   @GetMapping("/products/{id}")
   public ResponseEntity<Product> getProductById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product product = productService.getProductById(id);
     return product != null ? ResponseEntity.ok(product) : ResponseEntity.notFound().build();
   }
@@ -65,7 +65,7 @@ public class ProductsController {
   @Authorized
   @DeleteMapping("/products/{id}")
   public ResponseEntity<Boolean> deleteProductById(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     boolean deleted = productService.deleteProduct(id);
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
@@ -73,7 +73,7 @@ public class ProductsController {
   @Authorized
   @PostMapping("/products")
   public ResponseEntity<Product> createProduct(@RequestHeader Map<String, String> headers, @RequestBody ProductDTO product, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product createdProduct = productService.createProduct(product);
     return createdProduct != null ? ResponseEntity.ok(createdProduct) : ResponseEntity.badRequest().build();
   }
@@ -81,7 +81,7 @@ public class ProductsController {
   @Authorized
   @PatchMapping("/products/{id}")
   public ResponseEntity<Product> updateProduct(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product updatedProduct = productService.updateProduct(id, patchBody);
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
@@ -89,7 +89,7 @@ public class ProductsController {
   @Authorized
   @PutMapping("/products/{id}")
   public ResponseEntity<Product> replaceProduct(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ProductDTO product, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product replacedProduct = productService.updateProduct(id, product);
     return replacedProduct != null ? ResponseEntity.ok(replacedProduct) : ResponseEntity.notFound().build();
   }
@@ -97,7 +97,7 @@ public class ProductsController {
   // Categories endpoints
   @GetMapping("/products/{id}/categories")
   public ResponseEntity<List<Category>> getProductCategories(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Category> categories = productService.getProductCategories(id);
     return categories != null ? ResponseEntity.ok(categories) : ResponseEntity.notFound().build();
   }
@@ -105,7 +105,7 @@ public class ProductsController {
   @Authorized
   @PostMapping("/products/{id}/categories")
   public ResponseEntity<Product> addProductCategories(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody CategoryIdsDTO requestBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product updatedProduct = productService.addCategoriesToProduct(id, requestBody.getCategoryIds());
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
@@ -113,7 +113,7 @@ public class ProductsController {
   @Authorized
   @PutMapping("/products/{id}/categories")
   public ResponseEntity<Product> replaceProductCategories(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody CategoryIdsDTO requestBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product updatedProduct = productService.replaceProductCategories(id, requestBody.getCategoryIds());
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
@@ -121,7 +121,7 @@ public class ProductsController {
   // Attributes endpoints
   @GetMapping("/products/{id}/attributes")
   public ResponseEntity<List<Attribute>> getProductAttributes(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Attribute> attributes = productService.getProductAttributes(id);
     return attributes != null ? ResponseEntity.ok(attributes) : ResponseEntity.notFound().build();
   }
@@ -129,7 +129,7 @@ public class ProductsController {
   @Authorized
   @PostMapping("/products/{id}/attributes")
   public ResponseEntity<Product> addProductAttributes(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody AttributeIdsDTO requestBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product updatedProduct = productService.addAttributesToProduct(id, requestBody.getAttributeIds());
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
@@ -137,7 +137,7 @@ public class ProductsController {
   @Authorized
   @PutMapping("/products/{id}/attributes")
   public ResponseEntity<Product> replaceProductAttributes(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody AttributeIdsDTO requestBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product updatedProduct = productService.replaceProductAttributes(id, requestBody.getAttributeIds());
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
@@ -145,7 +145,7 @@ public class ProductsController {
   // Resources endpoints
   @GetMapping("/products/{id}/resources")
   public ResponseEntity<List<Product.ResourceWithBanner>> getProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<Product.ResourceWithBanner> resources = productService.getProductResources(id);
     return resources != null ? ResponseEntity.ok(resources) : ResponseEntity.notFound().build();
   }
@@ -160,7 +160,7 @@ public class ProductsController {
     @RequestParam(value = "isBanner", required = false) Boolean isBanner,
     HttpServletRequest request
   ) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     ResourceUploadDTO uploadDTO = new ResourceUploadDTO();
     uploadDTO.setType(type);
     uploadDTO.setIsBanner(isBanner);
@@ -171,7 +171,7 @@ public class ProductsController {
   @Authorized
   @PostMapping("/products/{id}/resources/bulk")
   public ResponseEntity<Product> addProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ResourceIdsDTO requestBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product updatedProduct = productService.addResourcesToProduct(id, requestBody.getResourceIds());
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
@@ -179,7 +179,7 @@ public class ProductsController {
   @Authorized
   @PutMapping("/products/{id}/resources")
   public ResponseEntity<Product> replaceProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ResourceIdsDTO requestBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     Product updatedProduct = productService.replaceProductResources(id, requestBody.getResourceIds());
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
@@ -191,7 +191,7 @@ public class ProductsController {
     @PathVariable String id, 
     @PathVariable String resourceId,
     HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     boolean deleted = productService.deleteResourceFromProduct(id, resourceId);
     
     if (deleted) {

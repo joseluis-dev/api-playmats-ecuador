@@ -31,7 +31,7 @@ public class ResourceProductController {
     @GetMapping("/resource-products")
     public ResponseEntity<List<ResourceProduct>> getResourceProducts(@RequestHeader Map<String, String> headers,
             HttpServletRequest request) {
-        log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+        // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
         List<ResourceProduct> resourceProducts = resourceProductService.getResourceProducts();
         return ResponseEntity.ok(resourceProducts);
     }
@@ -40,7 +40,7 @@ public class ResourceProductController {
     public ResponseEntity<ResourceProduct> getResourceProductById(@RequestHeader Map<String, String> headers,
             @PathVariable String id,
             HttpServletRequest request) {
-        log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+        // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
         ResourceProduct resourceProduct = resourceProductService.getResourceProductById(id);
         return resourceProduct != null ? ResponseEntity.ok(resourceProduct) : ResponseEntity.notFound().build();
     }
@@ -50,7 +50,7 @@ public class ResourceProductController {
     public ResponseEntity<ResourceProduct> createResourceProduct(@RequestHeader Map<String, String> headers,
             @RequestBody ResourceProductDTO resourceProduct,
             HttpServletRequest request) {
-        log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+        // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
         ResourceProduct createdResourceProduct = resourceProductService.createResourceProduct(resourceProduct);
         return createdResourceProduct != null ? ResponseEntity.ok(createdResourceProduct)
                 : ResponseEntity.badRequest().build();
@@ -62,7 +62,7 @@ public class ResourceProductController {
             @PathVariable String id,
             @RequestBody ResourceProductDTO resourceProduct,
             HttpServletRequest request) {
-        log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+        // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
         ResourceProduct updatedResourceProduct = resourceProductService.updateResourceProduct(id, resourceProduct);
         return updatedResourceProduct != null ? ResponseEntity.ok(updatedResourceProduct)
                 : ResponseEntity.notFound().build();
@@ -73,7 +73,7 @@ public class ResourceProductController {
     public ResponseEntity<Boolean> deleteResourceProduct(@RequestHeader Map<String, String> headers,
             @PathVariable String id,
             HttpServletRequest request) {
-        log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+        // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
         boolean deleted = resourceProductService.deleteResourceProduct(id);
         return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
     }
@@ -83,7 +83,7 @@ public class ResourceProductController {
             @RequestHeader Map<String, String> headers,
             @PathVariable String productId,
             HttpServletRequest request) {
-        log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+        // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
         List<ResourceProduct> resourceProducts = resourceProductService.getResourceProductsByProductId(productId);
         return resourceProducts != null ? ResponseEntity.ok(resourceProducts) : ResponseEntity.notFound().build();
     }
@@ -92,7 +92,7 @@ public class ResourceProductController {
     public ResponseEntity<List<ResourceProduct>> getBannersByProductId(@RequestHeader Map<String, String> headers,
             @PathVariable String productId,
             HttpServletRequest request) {
-        log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+        // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
         List<ResourceProduct> banners = resourceProductService.getBannersByProductId(productId);
         return banners != null ? ResponseEntity.ok(banners) : ResponseEntity.notFound().build();
     }
@@ -102,7 +102,7 @@ public class ResourceProductController {
             @RequestHeader Map<String, String> headers,
             @PathVariable String resourceId,
             HttpServletRequest request) {
-        log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+        // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
         List<ResourceProduct> resourceProducts = resourceProductService.getResourceProductsByResourceId(resourceId);
         return resourceProducts != null ? ResponseEntity.ok(resourceProducts) : ResponseEntity.notFound().build();
     }
@@ -113,7 +113,7 @@ public class ResourceProductController {
             @PathVariable String resourceId,
             @PathVariable String productId,
             HttpServletRequest request) {
-        log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+        // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
         boolean deleted = resourceProductService.deleteResourceProductByResourceIdAndProductId(resourceId, productId);
         return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
     }

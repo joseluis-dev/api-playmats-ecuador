@@ -41,42 +41,42 @@ public class UsersController {
     @RequestParam(required = false) String status,
     HttpServletRequest request
   ) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     List<User> users = userService.getUsers(provider, providerId, email, name, role, status);
     return users != null ? ResponseEntity.ok(users) : ResponseEntity.ok(Collections.emptyList());
   }
 
   @GetMapping("/users/{id}")
   public ResponseEntity<User> getUserById(@RequestHeader java.util.Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     User user = userService.getUserById(id);
     return user != null ? ResponseEntity.ok(user) : ResponseEntity.notFound().build();
   }
 
   @DeleteMapping("/users/{id}")
   public ResponseEntity<Boolean> deleteUserById(@RequestHeader java.util.Map<String, String> headers, @PathVariable String id, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     boolean deleted = userService.deleteUser(id);
     return deleted ? ResponseEntity.ok(true) : ResponseEntity.notFound().build();
   }
 
   @PostMapping("/users")
   public ResponseEntity<User> createUser(@RequestHeader java.util.Map<String, String> headers, @RequestBody UserDTO user, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     User createdUser = userService.createUser(user);
     return createdUser != null ? ResponseEntity.ok(createdUser) : ResponseEntity.badRequest().build();
   }
 
   @PatchMapping("/users/{id}")
   public ResponseEntity<User> updateUser(@RequestHeader java.util.Map<String, String> headers, @PathVariable String id, @RequestBody String patchBody, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     User updatedUser = userService.updateUser(id, patchBody);
     return updatedUser != null ? ResponseEntity.ok(updatedUser) : ResponseEntity.notFound().build();
   }
 
   @PutMapping("/users/{id}")
   public ResponseEntity<User> replaceUser(@RequestHeader java.util.Map<String, String> headers, @PathVariable String id, @RequestBody UserDTO user, HttpServletRequest request) {
-    log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
+    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
     User replacedUser = userService.updateUser(id, user);
     return replacedUser != null ? ResponseEntity.ok(replacedUser) : ResponseEntity.notFound().build();
   }
