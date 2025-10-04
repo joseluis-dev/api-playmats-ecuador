@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.playmatsec.app.controller.model.ProductDTO;
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
 import com.playmatsec.app.controller.model.ResourceProductDTO;
+import com.playmatsec.app.controller.model.ResourceProductRequestDTO;
 import com.playmatsec.app.repository.ProductRepository;
 import com.playmatsec.app.repository.CategoryRepository;
 import com.playmatsec.app.repository.AttributeRepository;
@@ -523,6 +525,130 @@ public class ProductServiceImpl implements ProductService {
             return product;
         } catch (Exception e) {
             log.error("Error replacing product resources for product {}", productId, e);
+            return null;
+        }
+    }
+    
+    @Override
+    @Transactional
+    public Product replaceProductResourcesWithBanner(String productId, List<ResourceProductRequestDTO> resourcesProduct) {
+        try {
+            Product product = getProductById(productId);
+            if (product == null) {
+                return null;
+            }
+
+            // Si la lista es null, no hacer nada (preservar relaciones actuales)
+            if (resourcesProduct == null) {
+                return product;
+            }
+
+            // Normalizar y validar que solo haya un banner
+            Map<String, Boolean> desiredResourceBanners = new HashMap<>();
+            boolean hasBanner = false;
+            
+            for (ResourceProductRequestDTO resourceReq : resourcesProduct) {
+                if (resourceReq != null && resourceReq.getResourceId() != null) {
+                    String trimmedId = resourceReq.getResourceId().trim();
+                    if (!trimmedId.isEmpty()) {
+                        Boolean isBanner = Boolean.TRUE.equals(resourceReq.getIsBanner());
+                        
+                        // Solo permitir un banner - si ya hay uno, el nuevo no será banner
+                        if (isBanner && !hasBanner) {
+                            hasBanner = true;
+                            desiredResourceBanners.put(trimmedId, true);
+                        } else {
+                            desiredResourceBanners.put(trimmedId, false);
+                        }
+                    }
+                }
+            }
+
+            // Cargar relaciones actuales
+            List<ResourceProduct> currentRelationships = resourceProductService.getResourceProductsByProductId(productId);
+            Set<String> currentIds = new HashSet<>();
+            boolean changed = false;
+            
+            // Primero, identificar si hay banners existentes y ponerlos en false si hay un nuevo banner
+            if (currentRelationships != null) {
+                for (ResourceProduct rp : currentRelationships) {
+                    try {
+                        Resource res = rp.getResource();
+                        if (res != null && res.getId() != null) {
+                            String currentResourceId = res.getId().toString();
+                            currentIds.add(currentResourceId);
+                            
+                            // Si este recurso actual es banner y hay un nuevo banner en la request, 
+                            // marcarlo para actualización a false
+                            if (Boolean.TRUE.equals(rp.getIsBanner()) && hasBanner) {
+                                ResourceProductDTO updateDto = new ResourceProductDTO();
+                                updateDto.setResourceId(currentResourceId);
+                                updateDto.setProductId(productId);
+                                updateDto.setIsBanner(false);
+                                resourceProductService.updateResourceProduct(rp.getId().toString(), updateDto);
+                                // log.info("Existing banner resource {} set to false for product {}", currentResourceId, productId);
+                                changed = true;
+                            }
+                        }
+                    } catch (Exception ex) {
+                        log.debug("Could not resolve resource id from ResourceProduct {}", rp != null ? rp.getId() : null, ex);
+                    }
+                }
+            }
+
+            // Determinar cuáles añadir (deseados - actuales)
+            for (String desiredId : desiredResourceBanners.keySet()) {
+                if (!currentIds.contains(desiredId)) {
+                    try {
+                        Resource resource = resourceRepository.getById(Integer.valueOf(desiredId));
+                        if (resource != null) {
+                            ResourceProductDTO dto = new ResourceProductDTO();
+                            dto.setResourceId(desiredId);
+                            dto.setProductId(productId);
+                            dto.setIsBanner(desiredResourceBanners.get(desiredId));
+                            resourceProductService.createResourceProduct(dto);
+                            changed = true;
+                        }
+                    } catch (IllegalArgumentException iae) {
+                        log.warn("Skipping invalid resource id '{}' while adding to product {}", desiredId, productId);
+                    }
+                }
+            }
+
+            // Determinar cuáles actualizar o remover
+            for (String currentId : currentIds) {
+                if (desiredResourceBanners.containsKey(currentId)) {
+                    // Actualizar el flag isBanner si es necesario
+                    ResourceProduct existingRelation = resourceProductService.getResourceProductByResourceIdAndProductId(currentId, productId);
+                    if (existingRelation != null) {
+                        Boolean newBannerFlag = desiredResourceBanners.get(currentId);
+                        if (!Boolean.valueOf(newBannerFlag).equals(existingRelation.getIsBanner())) {
+                            ResourceProductDTO updateDto = new ResourceProductDTO();
+                            updateDto.setResourceId(currentId);
+                            updateDto.setProductId(productId);
+                            updateDto.setIsBanner(newBannerFlag);
+                            resourceProductService.updateResourceProduct(existingRelation.getId().toString(), updateDto);
+                            changed = true;
+                        }
+                    }
+                } else {
+                    // Remover relación (no está en los deseados)
+                    boolean removed = resourceProductService.deleteResourceProductByResourceIdAndProductId(currentId, productId);
+                    if (!removed) {
+                        log.warn("Failed to remove relation: product {} - resource {}", productId, currentId);
+                    }
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                product.setUpdatedAt(LocalDateTime.now());
+                return productRepository.save(product);
+            }
+
+            return product;
+        } catch (Exception e) {
+            log.error("Error replacing product resources with banner for product {}", productId, e);
             return null;
         }
     }

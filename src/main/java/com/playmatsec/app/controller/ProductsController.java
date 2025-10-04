@@ -24,6 +24,7 @@ import com.playmatsec.app.config.Authorized;
 import com.playmatsec.app.controller.model.AttributeIdsDTO;
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
 import com.playmatsec.app.controller.model.ResourceIdsDTO;
+import com.playmatsec.app.controller.model.ReplaceProductResourcesDTO;
 import com.playmatsec.app.repository.model.Attribute;
 import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Product;
@@ -178,9 +179,9 @@ public class ProductsController {
 
   @Authorized
   @PutMapping("/products/{id}/resources")
-  public ResponseEntity<Product> replaceProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ResourceIdsDTO requestBody, HttpServletRequest request) {
-    // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
-    Product updatedProduct = productService.replaceProductResources(id, requestBody.getResourceIds());
+  public ResponseEntity<Product> replaceProductResources(@RequestHeader Map<String, String> headers, @PathVariable String id, @RequestBody ReplaceProductResourcesDTO requestBody, HttpServletRequest request) {
+    // log.info("[{} {}] Replacing product resources - Product ID: {}", request.getMethod(), request.getRequestURI(), id);
+    Product updatedProduct = productService.replaceProductResourcesWithBanner(id, requestBody.getResourcesProduct());
     return updatedProduct != null ? ResponseEntity.ok(updatedProduct) : ResponseEntity.notFound().build();
   }
 

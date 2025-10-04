@@ -7,6 +7,7 @@ import com.playmatsec.app.repository.model.Category;
 import com.playmatsec.app.repository.model.Attribute;
 import com.playmatsec.app.controller.model.ProductDTO;
 import com.playmatsec.app.controller.model.ResourceUploadDTO;
+import com.playmatsec.app.controller.model.ResourceProductRequestDTO;
 
 public interface ProductService {
     List<Product> getProducts(String name, String description, Double price, Boolean isCustomizable, String resourceFilter);
@@ -32,5 +33,6 @@ public interface ProductService {
     Product.ResourceWithBanner addResourceToProductAndReturnResource(String productId, MultipartFile file, ResourceUploadDTO uploadDTO);
     Product addResourcesToProduct(String productId, List<String> resourceIds);
     Product replaceProductResources(String productId, List<String> resourceIds);
+    Product replaceProductResourcesWithBanner(String productId, List<ResourceProductRequestDTO> resourcesProduct);
     Boolean deleteResourceFromProduct(String productId, String resourceId);
 }
