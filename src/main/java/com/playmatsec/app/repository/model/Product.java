@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,6 +32,8 @@ public class Product {
     private UUID id;
 
     private String name;
+    
+    @Column(length = 1000)
     private String description;
     private BigDecimal price;
     private LocalDateTime createdAt;
