@@ -1,5 +1,6 @@
 package com.playmatsec.app.repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,7 +35,7 @@ public class ProductRepository {
         repository.delete(product);
     }
 
-    public List<Product> search(String name, String description, Double price, Boolean isCustomizable, String resourceFilter) {
+    public List<Product> search(String name, String description, Double price, Boolean isCustomizable, String resourceFilter, String categoryFilter) {
         ProductSearchCriteria spec = new ProductSearchCriteria();
         if (StringUtils.isNotBlank(name)) {
             spec.add(new SearchStatement(ProductConsts.NAME, name, SearchOperation.MATCH));
@@ -78,6 +79,48 @@ public class ProductRepository {
             if (!handled) {
                 spec.add(new SearchStatement(ProductConsts.RESOURCE_PRODUCTS_RESOURCE_NAME, trimmed, SearchOperation.MATCH));
                 spec.add(new SearchStatement(ProductConsts.RESOURCE_PRODUCTS_RESOURCE_HOSTING, trimmed, SearchOperation.MATCH));
+            }
+        }
+
+        // categoryFilter soporta:
+        //  - Lista de IDs: "1,2,3" (AND entre todas)
+        //  - Color HEX: #abc / #a1b2c3 (igual exacto contra categories.color)
+        //  - Texto: búsqueda parcial (ILIKE) en categories.name OR categories.description
+        if (StringUtils.isNotBlank(categoryFilter)) {
+            String filter = categoryFilter.trim();
+            boolean processed = false;
+            // Intentar como lista de IDs (AND semantics)
+            String[] idParts = filter.split(",");
+            boolean allInts = true;
+            List<Integer> idList = new ArrayList<>();
+            for (String p : idParts) {
+                String t = p.trim();
+                if (t.isEmpty()) continue;
+                try {
+                    idList.add(Integer.valueOf(t));
+                } catch (NumberFormatException ex) {
+                    allInts = false;
+                    break;
+                }
+            }
+            if (allInts && !idList.isEmpty()) {
+                spec.add(new SearchStatement(ProductConsts.CATEGORIES_ID, idList, SearchOperation.IN_ALL));
+                processed = true;
+            }
+            // Intentar como color HEX (#rgb o #rrggbb)
+            if (!processed && filter.matches("(?i)^#?([0-9a-f]{3}|[0-9a-f]{6})$")) {
+                String normalized = filter.startsWith("#") ? filter.toLowerCase() : "#" + filter.toLowerCase();
+                spec.add(new SearchStatement(ProductConsts.CATEGORIES_COLOR, normalized, SearchOperation.EQUAL));
+                processed = true;
+            }
+            // Texto libre => name OR description LIKE
+            if (!processed) {
+                String lower = filter.toLowerCase();
+                // Guardamos el texto a buscar empaquetado en un SearchStatement especial
+                // Usaremos una clave sintética para que el Specification construya el OR (lo añadiremos si no existe ya la lógica)
+                spec.add(new SearchStatement(ProductConsts.CATEGORIES_NAME, lower, SearchOperation.MATCH));
+                spec.add(new SearchStatement(ProductConsts.CATEGORIES_DESCRIPTION, lower, SearchOperation.MATCH));
+                processed = true;
             }
         }
         return repository.findAll(spec);

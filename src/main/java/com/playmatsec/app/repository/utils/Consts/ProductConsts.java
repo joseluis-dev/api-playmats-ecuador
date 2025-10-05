@@ -18,4 +18,11 @@ public class ProductConsts {
     public static final String RESOURCE_PRODUCTS_RESOURCE_WATERMARK = "resourceProducts.resource.watermark";
     public static final String RESOURCE_PRODUCTS_RESOURCE_HOSTING = "resourceProducts.resource.hosting";
     public static final String RESOURCE_PRODUCTS_RESOURCE_TYPE = "resourceProducts.resource.type";
+
+    // Campos de categorías asociadas (vía categories)
+    public static final String CATEGORIES = "categories";
+    public static final String CATEGORIES_ID = CATEGORIES + ".id";
+    public static final String CATEGORIES_NAME = CATEGORIES + ".name";
+    public static final String CATEGORIES_DESCRIPTION = CATEGORIES + ".description";
+    public static final String CATEGORIES_COLOR = CATEGORIES + ".color";
 }

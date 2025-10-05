@@ -41,6 +41,12 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductsController {
   private final ProductService productService;
 
+  /**
+   * Lista productos con filtros opcionales.
+   * Para múltiples categorías use:
+   * - Repetir parámetro: ?category=1&category=2
+   * - O separado por comas: ?category=1,2,3
+   */
   @GetMapping("/products")
   public ResponseEntity<List<Product>> getProducts(
     @RequestHeader Map<String, String> headers,
@@ -49,10 +55,12 @@ public class ProductsController {
     @RequestParam(required = false) Double price,
     @RequestParam(required = false) Boolean isCustomizable,
     @RequestParam(name = "resource", required = false) String resourceFilter,
+    @RequestParam(name = "category", required = false) String categoryFilter,
     HttpServletRequest request
   ) {
     // log.info("[{} {}] headers: {}", request.getMethod(), request.getRequestURI(), headers);
-    List<Product> products = productService.getProducts(name, description, price, isCustomizable, resourceFilter);
+    // category = "1,2" (IDs AND), "#ff00aa" (color), "Azul" (name), "algo con espacios" (description)
+    List<Product> products = productService.getProducts(name, description, price, isCustomizable, resourceFilter, categoryFilter);
     return products != null ? ResponseEntity.ok(products) : ResponseEntity.ok(Collections.emptyList());
   }
 

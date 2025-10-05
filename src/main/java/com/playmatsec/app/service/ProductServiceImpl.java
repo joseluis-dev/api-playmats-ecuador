@@ -52,10 +52,10 @@ public class ProductServiceImpl implements ProductService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<Product> getProducts(String name, String description, Double price, Boolean isCustomizable, String resourceFilter) {
+    public List<Product> getProducts(String name, String description, Double price, Boolean isCustomizable, String resourceFilter, String categoryFilter) {
         if (StringUtils.hasLength(name) || StringUtils.hasLength(description) || price != null
-                || isCustomizable != null || StringUtils.hasLength(resourceFilter)) {
-            return productRepository.search(name, description, price, isCustomizable, resourceFilter);
+                || isCustomizable != null || StringUtils.hasLength(resourceFilter) || StringUtils.hasLength(categoryFilter)) {
+            return productRepository.search(name, description, price, isCustomizable, resourceFilter, categoryFilter);
         }
         List<Product> products = productRepository.getProducts();
         return products.isEmpty() ? null : products;

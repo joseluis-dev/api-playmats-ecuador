@@ -10,7 +10,7 @@ import com.playmatsec.app.controller.model.ResourceUploadDTO;
 import com.playmatsec.app.controller.model.ResourceProductRequestDTO;
 
 public interface ProductService {
-    List<Product> getProducts(String name, String description, Double price, Boolean isCustomizable, String resourceFilter);
+    List<Product> getProducts(String name, String description, Double price, Boolean isCustomizable, String resourceFilter, String categoryFilter);
     Product getProductById(String id);
     Product createProduct(ProductDTO product);
     Product updateProduct(String id, String updateRequest);
